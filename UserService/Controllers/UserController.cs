@@ -54,8 +54,7 @@ namespace UserService.Controllers
         public IActionResult Put(RegistrationModel model)
         {
             UsersResponse response = new UsersResponse();
-            if (ModelState.IsValid)
-                response = _usersRepository.UpdateUser(model);
+            response = _usersRepository.UpdateUser(model);
             if (response.responseCode != ResponseCode.Success)
                 return GetActionResult(response);
             return Ok(response);

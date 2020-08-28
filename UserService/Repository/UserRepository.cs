@@ -26,6 +26,7 @@ using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
 using System.Runtime;
 using RestSharp.Serialization;
+using System.Text.RegularExpressions;
 
 namespace UserService.Repository
 {
@@ -51,75 +52,64 @@ namespace UserService.Repository
             _passwordHasherRepository = passwordHasherRepository;
         }
 
-        public SignInResponse SignIn(SigninModel model)
+        public (ErrorResponse errorResponse, SignInResponse response) SignIn(SigninModel model)
         {
             SignInResponse response = new SignInResponse();
+            ErrorResponse errorResponse = new ErrorResponse();
+            errorResponse.errors = new List<ErrorDetails>();
+            ErrorDetails errorDetails = new ErrorDetails();
             try
             {
                 Users user = new Users();
-                if (string.IsNullOrEmpty(model.Username))
-                {
-                    response.status = false;
-                    response.message = "Invalid username.";
-                    response.token = null;
-                    response.responseCode = ResponseCode.BadRequest;
-                    return response;
-                }
-                
-                if (string.IsNullOrEmpty(model.Password))
-                {
-                    response.status = false;
-                    response.message = "Invalid password.";
-                    response.token = null;
-                    response.responseCode = ResponseCode.BadRequest;
-                    return response;
-                }
-
-
                 user = _context.Users.Where(x => x.Email == model.Username).FirstOrDefault();
                 if (user == null)
                 {
                     var phoneUser = _context.Phones.Where(x => x.Number == model.Username).FirstOrDefault();
                     if (phoneUser == null)
                     {
-                        response.status = false;
-                        response.message = "User not found.";
-                        response.token = null;
-                        response.responseCode = ResponseCode.NotFound;
-                        return response;
+                        errorDetails.status = 400;
+                        errorDetails.code = 1;
+                        errorDetails.detail = "Incorrect username.";
+                        errorResponse.errors.Add(errorDetails);
+                        return (errorResponse, null);
                     }
 
                     user = _context.Users.Where(x => x.UserId == phoneUser.UserId).FirstOrDefault();
                     if (user == null)
                     {
-                        response.status = false;
-                        response.message = "User not found.";
-                        response.token = null;
-                        response.responseCode = ResponseCode.NotFound;
-                        return response;
+                        errorDetails.status = 400;
+                        errorDetails.code = 1;
+                        errorDetails.detail = "Incorrect username.";
+                        errorResponse.errors.Add(errorDetails);
+                        return (errorResponse, null);
                     }
 
-                    if (phoneUser.Number != model.Username && !_passwordHasherRepository.Check(user.Password, AesBase64Wrapper.DecodeAndDecrypt(model.Password)).Verified)
+                    var originalPassword = AesBase64Wrapper.DecodeAndDecrypt(model.Password);
+                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
+                    if (!isVerified)
                     {
-                        response.status = false;
-                        response.message = "Login Failed: Incorrect phone or password!";
-                        response.token = null;
-                        response.responseCode = ResponseCode.Unauthorized;
-                        return response;
+                        errorDetails.status = 400;
+                        errorDetails.code = 2;
+                        errorDetails.detail = "Incorrect password.";
+                        errorResponse.errors.Add(errorDetails);
+                        return (errorResponse, null);
                     }
                 }
                 else
                 {
-                    if (user.Email != model.Username && !_passwordHasherRepository.Check(user.Password, AesBase64Wrapper.DecodeAndDecrypt(model.Password)).Verified)
+
+                    var originalPassword = AesBase64Wrapper.DecodeAndDecrypt(model.Password);
+                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
+                    if (!isVerified)
                     {
-                        response.status = false;
-                        response.message = "Login Failed: Incorrect phone or password!";
-                        response.token = null;
-                        response.responseCode = ResponseCode.Unauthorized;
-                        return response;
+                        errorDetails.status = 400;
+                        errorDetails.code = 2;
+                        errorDetails.detail = "Incorrect password.";
+                        errorResponse.errors.Add(errorDetails);
+                        return (errorResponse, null);
                     }
                 }
-               
+
                 var usersRole = (from usersrole in _context.UsersRoles
                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
                                  where usersrole.UserId == user.UserId
@@ -133,11 +123,11 @@ namespace UserService.Repository
 
                 if (usersRole == null)
                 {
-                    response.status = false;
-                    response.message = "Role not found.";
-                    response.token = null;
-                    response.responseCode = ResponseCode.NotFound;
-                    return response;
+                    errorDetails.status = 404;
+                    errorDetails.code = 4;
+                    errorDetails.detail = "Incorrect user role.";
+                    errorResponse.errors.Add(errorDetails);
+                    return (errorResponse, null);
                 }
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
@@ -155,15 +145,15 @@ namespace UserService.Repository
                 response.status = true;
                 response.token = Token;
                 response.responseCode = ResponseCode.Success;
-                return response;
+                return (null, response);
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Something went wrong while login. Error Message - " + ex.Message;
-                response.token = null;
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                errorDetails.status = 500;
+                errorDetails.code = 3;
+                errorDetails.detail = "Something went wrong while login. Error Message - " + ex.Message;
+                errorResponse.errors.Add(errorDetails);
+                return (errorResponse, null);
             }
         }
 
@@ -229,15 +219,17 @@ namespace UserService.Repository
                 _context.Users.Add(users);
                 _context.SaveChanges();
 
-                Phones phone = new Phones()
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
                 {
-                    UserId = users.UserId,
-                    IsVerified = false,
-                    Number = model.PhoneNumber,
-                };
-                _context.Phones.Add(phone);
-                _context.SaveChanges();
-
+                    Phones phone = new Phones()
+                    {
+                        UserId = users.UserId,
+                        IsVerified = false,
+                        Number = model.PhoneNumber,
+                    };
+                    _context.Phones.Add(phone);
+                    _context.SaveChanges();
+                }
                 foreach (var role in model.Roles)
                 {
                     UsersRoles usersroles = new UsersRoles()
@@ -252,7 +244,7 @@ namespace UserService.Repository
                 DriversModel driver = new DriversModel()
                 {
                     InstitutionId = model.InstitutionId,
-                    UserId = 1
+                    UserId = users.UserId
                 };
 
                 var client = new RestClient(_appSettings.VehicleEndpointUrl);
@@ -268,6 +260,116 @@ namespace UserService.Repository
                     response.responseCode = ResponseCode.InternalServerError;
                     return response;
                 }
+
+                response.status = true;
+                response.message = "User created successfully.";
+                response.responseCode = ResponseCode.Created;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.status = false;
+                response.message = "Something went wrong while inserting user. Error Message - " + ex.Message;
+                response.responseCode = ResponseCode.InternalServerError;
+                return response;
+            }
+        }
+
+        public UsersResponse APISignUp(APIRegistrationModel model)
+        {
+            UsersResponse response = new UsersResponse();
+            try
+            {
+                string PhoneNumber = string.Empty;
+                string Email = string.Empty;
+                if (!string.IsNullOrEmpty(model.UserName))
+                {
+                    if (Regex.IsMatch(model.UserName, @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}", RegexOptions.IgnoreCase))
+                    {
+                        Email = model.UserName;
+                    }
+                    else if (Regex.IsMatch(model.UserName, @"(\d*-)?\d{10}", RegexOptions.IgnoreCase))
+                    {
+                        PhoneNumber = model.UserName;
+                    }
+                }
+
+                if (model.Roles.Count == 0)
+                {
+                    response.status = false;
+                    response.message = "Role is required.";
+                    response.responseCode = ResponseCode.BadRequest;
+                    return response;
+                }
+
+                foreach (var role in model.Roles)
+                {
+                    var userRolesData = _context.Roles.Where(x => x.RoleId == role).FirstOrDefault();
+                    if (userRolesData == null)
+                    {
+                        response.status = false;
+                        response.message = "Role not found.";
+                        response.responseCode = ResponseCode.NotFound;
+                        return response;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(PhoneNumber))
+                {
+                    var phoneData = _context.Phones.Where(x => x.Number == PhoneNumber).FirstOrDefault();
+                    if (phoneData != null)
+                    {
+                        response.status = false;
+                        response.message = "Phone number already exist.";
+                        response.responseCode = ResponseCode.Conflict;
+                        return response;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(Email))
+                {
+                    var userEmailData = _context.Users.Where(x => x.Email == Email).FirstOrDefault();
+                    if (userEmailData != null)
+                    {
+                        response.status = false;
+                        response.message = "Email already exist.";
+                        response.responseCode = ResponseCode.Conflict;
+                        return response;
+                    }
+                }
+
+                Users users = new Users()
+                {
+                    Name = model.Name,
+                    Email = Email,
+                    CreatedAt = DateTime.UtcNow,
+                    Password = model.Password, //_passwordHasherRepository.Hash(AesBase64Wrapper.DecodeAndDecrypt(model.Password)),
+                    IsEmailVerified = false
+                };
+                _context.Users.Add(users);
+                _context.SaveChanges();
+
+                if (!string.IsNullOrEmpty(PhoneNumber))
+                {
+                    Phones phone = new Phones()
+                    {
+                        UserId = users.UserId,
+                        IsVerified = false,
+                        Number = PhoneNumber,
+                    };
+                    _context.Phones.Add(phone);
+                    _context.SaveChanges();
+                }
+                foreach (var role in model.Roles)
+                {
+                    UsersRoles usersroles = new UsersRoles()
+                    {
+                        UserId = users.UserId,
+                        RoleId = role
+                    };
+                    _context.UsersRoles.Add(usersroles);
+                }
+                _context.SaveChanges();
 
                 response.status = true;
                 response.message = "User created successfully.";
@@ -904,7 +1006,7 @@ namespace UserService.Repository
                     return response;
                 }
 
-                
+
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
                     UserId = user.UserId,

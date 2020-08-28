@@ -31,7 +31,7 @@ namespace UserService.Repository
             try
             {
                 var verificationResource = await VerificationResource.CreateAsync(
-                    to: phoneNumber,
+                    to: "+965" + phoneNumber,
                     channel: "sms",
                     pathServiceSid: _config.VerificationSid
                 );
@@ -46,14 +46,14 @@ namespace UserService.Repository
                 }
 
                 response.status = true;
-                response.message = "An SMS with OTP is sent to your phone number successfully.";
+                response.message = "6 digit code has been sent successfully.";
                 response.responseCode = ResponseCode.Success;
                 return response;
             }
-            catch (TwilioException e)
+            catch (TwilioException ex)
             {
                 response.status = false;
-                response.message = "Something went wrong while sending otp to your phone. Error Message - " + new VerificationResult(new List<string> { e.Message });
+                response.message = "Please enter valid phone number";
                 response.responseCode = ResponseCode.InternalServerError;
                 return response;
             }
@@ -73,7 +73,7 @@ namespace UserService.Repository
                 }
 
                 var verificationCheckResource = await VerificationCheckResource.CreateAsync(
-                    to: phoneNumber,
+                    to: "+965" + phoneNumber,
                     code: code,
                     pathServiceSid: _config.VerificationSid
                 );
@@ -88,7 +88,7 @@ namespace UserService.Repository
                     response.responseCode = ResponseCode.InternalServerError;
                     return response;
                 }
-                
+
                 response.status = true;
                 response.message = "OTP verified successfully.";
                 response.responseCode = ResponseCode.Success;
@@ -102,5 +102,7 @@ namespace UserService.Repository
                 return response;
             }
         }
+
+
     }
 }

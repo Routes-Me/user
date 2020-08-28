@@ -37,6 +37,13 @@ namespace UserService.Models
         InvalidToken = 498
     }
 
+    public class ErrorDetails
+    {
+        public int status { get; set; }
+        public string detail { get; set; }
+        public int code { get; set; }
+    }
+
     #region UserRoles Response
     public class RolesResponse : Response { }
     public class RolesGetResponse : Response
@@ -46,9 +53,14 @@ namespace UserService.Models
     }
     #endregion
 
-
     #region Login Response
     public class SignInV2Response : Response { }
+
+    public class ErrorResponse
+    { 
+        public List<ErrorDetails> errors { get; set; }
+    }
+
     public class SignInResponse : Response
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

@@ -10,7 +10,7 @@ namespace UserService.Abstraction
 {
     public interface IUserRepository
     {
-        SignInResponse SignIn(SigninModel model);
+        (ErrorResponse errorResponse, SignInResponse response) SignIn(SigninModel model);
         UsersResponse SignUp(RegistrationModel model);
         Task<SignInV2Response> SendSignInOTP(SignInOTPModel model);
         Task<SignInResponse> VerifySignInOTP(VerifySignInOTPModel model);

@@ -16,4 +16,12 @@ namespace UserService.Models.ResponseModel
         public string Name { get; set; }
         public int InstitutionId { get; set; }
     }
+
+    public class APIRegistrationModel
+    {
+        public string Name { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public List<int> Roles { get; set; }
+    }
 }

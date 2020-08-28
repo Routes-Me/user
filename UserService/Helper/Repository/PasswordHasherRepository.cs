@@ -48,8 +48,8 @@ namespace UserService.Helper.Repository
 
             //var iterations = Convert.ToInt32(parts[0]);
             var iterations = 10000;
-            var salt = Convert.FromBase64String(parts[1]);
-            var key = Convert.FromBase64String(parts[2]);
+            var salt = Convert.FromBase64String(parts[0]);
+            var key = Convert.FromBase64String(parts[1]);
 
             var needsUpgrade = iterations != Options.Iterations;
 

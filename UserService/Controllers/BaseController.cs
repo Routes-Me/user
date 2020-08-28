@@ -34,5 +34,24 @@ namespace UserService.Controllers
                     return StatusCode((int)response.responseCode, response.message);
             }
         }
+
+        protected IActionResult GetErrorResult(ErrorResponse errorResponse)
+        {
+            switch (errorResponse.errors.FirstOrDefault().status)
+            {
+                case 404:
+                    return NotFound(errorResponse);
+                case 400:
+                    return BadRequest(errorResponse);
+                case 409:
+                    return Conflict(errorResponse);
+                case 401:
+                    return Unauthorized(errorResponse);
+                case 500:
+                    return BadRequest(errorResponse);
+                default:
+                    return StatusCode(errorResponse.errors.FirstOrDefault().status, errorResponse.errors.FirstOrDefault().detail);
+            }
+        }
     }
 }
