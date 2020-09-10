@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -13,33 +14,45 @@ namespace UserService.Models
     {
         public bool status { get; set; }
         public string message { get; set; }
-        public ResponseCode responseCode { get; set; }
+        public int statusCode { get; set; }
     }
-    public enum ResponseCode
+
+    public class ReturnResponse
     {
-        Success = 200,
-        Error = 2,
-        InternalServerError = 500,
-        MovedPermanently = 301,
-        NotFound = 404,
-        BadRequest = 400,
-        Conflict = 409,
-        Created = 201,
-        NotAcceptable = 406,
-        Unauthorized = 401,
-        RequestTimeout = 408,
-        BadGateway = 502,
-        ServiceUnavailable = 503,
-        GatewayTimeout = 504,
-        Permissionserror = 403,
-        Forbidden = 403,
-        TokenRequired = 499,
-        InvalidToken = 498
+        public static dynamic ExceptionResponse(Exception ex)
+        {
+            Response response = new Response();
+            response.status = false;
+            response.message = CommonMessage.ExceptionMessage + ex.Message;
+            response.statusCode = StatusCodes.Status500InternalServerError;
+            return response;
+        }
+
+        public static dynamic SuccessResponse(string message, bool isCreated)
+        {
+            Response response = new Response();
+            response.status = true;
+            response.message = message;
+            if (isCreated)
+                response.statusCode = StatusCodes.Status201Created;
+            else
+                response.statusCode = StatusCodes.Status200OK;
+            return response;
+        }
+
+        public static dynamic ErrorResponse(string message, int statusCode)
+        {
+            Response response = new Response();
+            response.status = true;
+            response.message = message;
+            response.statusCode = statusCode;
+            return response;
+        }
     }
 
     public class ErrorDetails
     {
-        public int status { get; set; }
+        public int statusCode { get; set; }
         public string detail { get; set; }
         public int code { get; set; }
     }
@@ -54,10 +67,9 @@ namespace UserService.Models
     #endregion
 
     #region Login Response
-    public class SignInV2Response : Response { }
 
     public class ErrorResponse
-    { 
+    {
         public List<ErrorDetails> errors { get; set; }
     }
 
@@ -69,7 +81,11 @@ namespace UserService.Models
     #endregion
 
     #region User Response
-    public class UsersResponse : Response { }
+    public class UsersResponse : Response
+    {
+        public int UserId { get; set; }
+        public string Email { get; set; }
+    }
 
     public class UsersGetResponse : Response
     {
@@ -77,7 +93,6 @@ namespace UserService.Models
         public List<UsersModel> data { get; set; }
     }
 
-    public class UsersAvatarResponse : Response { }
     #endregion
 
     public class EmailResponse : Response { }

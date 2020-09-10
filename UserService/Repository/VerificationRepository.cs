@@ -1,108 +1,184 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Twilio;
 using Twilio.Exceptions;
 using Twilio.Rest.Verify.V2.Service;
 using UserService.Abstraction;
-using UserService.DatabaseAccess.Abstraction;
+using UserService.Helper.Abstraction;
 using UserService.Models;
 using UserService.Models.Common;
 using UserService.Models.DBModels;
+using UserService.Models.ResponseModel;
 
 namespace UserService.Repository
 {
     public class VerificationRepository : IVerificationRepository
     {
-        private readonly Configuration.Twilio _config;
+        private readonly userserviceContext _context;
+        private readonly IHelperRepository _helper;
+        private readonly ITwilioVerificationRepository _twilioVerificationRepository;
 
-        public VerificationRepository(Configuration.Twilio configuration)
+        public VerificationRepository(userserviceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository)
         {
-            _config = configuration;
-            TwilioClient.Init(_config.AccountSid, _config.AuthToken);
+            _context = context;
+            _helper = helper;
+            _twilioVerificationRepository = twilioVerificationRepository;
         }
 
-        public async Task<SignInV2Response> SendOTP(string phoneNumber)
+        public async Task<dynamic> SendOTP(SendOTPModel model)
         {
-            SignInV2Response response = new SignInV2Response();
             try
             {
-                var verificationResource = await VerificationResource.CreateAsync(
-                    to: "+965" + phoneNumber,
-                    channel: "sms",
-                    pathServiceSid: _config.VerificationSid
-                );
-                var result = new VerificationResult(verificationResource.Sid);
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
 
-                if (!result.IsValid)
-                {
-                    response.status = false;
-                    response.message = "Something went wrong while sending otp to your phone";
-                    response.responseCode = ResponseCode.InternalServerError;
-                    return response;
-                }
+                var phone = _context.Phones.Where(x => x.Number == model.Phone).FirstOrDefault();
+                if (phone == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneNotExist, StatusCodes.Status404NotFound);
 
-                response.status = true;
-                response.message = "6 digit code has been sent successfully.";
-                response.responseCode = ResponseCode.Success;
-                return response;
+                bool result = await _twilioVerificationRepository.TwilioVerificationResource(model.Phone);
+                if (!result)
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpSendFailed, StatusCodes.Status500InternalServerError);
+
+                return ReturnResponse.SuccessResponse(CommonMessage.OtpSendSuccess, false);
             }
             catch (TwilioException ex)
             {
-                response.status = false;
-                response.message = "Please enter valid phone number";
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
 
-        public async Task<SignInV2Response> VerifyOTP(string phoneNumber, string code)
+        public async Task<dynamic> VerifyOTP(VerifyOTPModel model)
         {
-            SignInV2Response response = new SignInV2Response();
             try
             {
-                if (string.IsNullOrEmpty(code))
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
+
+                if (string.IsNullOrEmpty(model.Code))
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpNotFound, StatusCodes.Status400BadRequest);
+
+                var phone = _context.Phones.Where(x => x.Number == model.Phone).FirstOrDefault();
+                if (phone == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneNotExist, StatusCodes.Status404NotFound);
+
+                bool result = await _twilioVerificationRepository.TwilioVerificationCheckResource(model.Phone, model.Code);
+                if (!result)
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpInvalid, StatusCodes.Status401Unauthorized);
+
+                phone.IsVerified = true;
+                _context.Phones.Update(phone);
+                _context.SaveChanges();
+
+                return ReturnResponse.SuccessResponse(CommonMessage.OtpVerifiedSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public async Task<dynamic> VerifySigninOTP(VerifyOTPModel model)
+        {
+            try
+            {
+                SignInResponse response = new SignInResponse();
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
+
+                if (string.IsNullOrEmpty(model.Code))
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpRequired, StatusCodes.Status400BadRequest);
+
+                var phone = _context.Phones.Include(x => x.User).Include(x => x.User.UsersRoles).Where(x => x.Number == model.Phone).FirstOrDefault();
+                if (phone == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneNotExist, StatusCodes.Status404NotFound);
+
+                if (phone.User == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotExist, StatusCodes.Status404NotFound);
+
+                if (phone.User.UsersRoles == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
+
+                TokenGenerator tokenGenerator = new TokenGenerator();
+                foreach (var item in phone.User.UsersRoles)
                 {
-                    response.status = false;
-                    response.message = "Pass valid OTP code.";
-                    response.responseCode = ResponseCode.BadRequest;
-                    return response;
+                    var role = _context.Roles.Where(x => x.RoleId == item.RoleId).FirstOrDefault();
+                    if (role == null)
+                        return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
+
+                    tokenGenerator.RoleName = role.Name;
                 }
+                tokenGenerator.UserId = phone.User.UserId;
+                tokenGenerator.Email = phone.User.Email;
+                var result = await VerifyOTP(model);
+                if (result.statusCode != StatusCodes.Status200OK)
+                    return ReturnResponse.ErrorResponse(result.message, result.statusCode);
 
-                var verificationCheckResource = await VerificationCheckResource.CreateAsync(
-                    to: "+965" + phoneNumber,
-                    code: code,
-                    pathServiceSid: _config.VerificationSid
-                );
-                var result = verificationCheckResource.Status.Equals("approved") ?
-                    new VerificationResult(verificationCheckResource.Sid) :
-                    new VerificationResult(new List<string> { "Wrong code. Try again." });
-
-                if (!result.IsValid)
-                {
-                    response.status = false;
-                    response.message = "Something went wrong while verifying OTP. Error - " + result.Errors.ToString();
-                    response.responseCode = ResponseCode.InternalServerError;
-                    return response;
-                }
-
+                string Token = _helper.GenerateToken(tokenGenerator);
+                response.message = CommonMessage.LoginSuccess;
                 response.status = true;
-                response.message = "OTP verified successfully.";
-                response.responseCode = ResponseCode.Success;
+                response.token = Token;
+                response.statusCode = StatusCodes.Status200OK;
                 return response;
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Invalid OTP.";
-                response.responseCode = ResponseCode.BadRequest;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
 
+        public async Task<dynamic> SendEmailConfirmation(EmailModel model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(model.Email))
+                    return ReturnResponse.ErrorResponse(CommonMessage.EmailRequired, StatusCodes.Status400BadRequest);
 
+                if (string.IsNullOrEmpty(model.RedirectUrl))
+                    return ReturnResponse.ErrorResponse(CommonMessage.RedirectUrlRequired, StatusCodes.Status400BadRequest);
+
+                var userData = _context.Users.Where(x => x.UserId == model.UserId).FirstOrDefault();
+                if (userData == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
+
+                if (userData.Email.ToLower() != model.Email.ToLower())
+                    return ReturnResponse.ErrorResponse(CommonMessage.EmailNotBelongToUser, StatusCodes.Status404NotFound);
+
+                var res = await _helper.SendConfirmationEmail(model.UserId, model.Email, model.RedirectUrl);
+                if (res.StatusCode != HttpStatusCode.Accepted)
+                    return ReturnResponse.ErrorResponse(CommonMessage.EmailVerificationNotSend, StatusCodes.Status500InternalServerError);
+
+                return ReturnResponse.SuccessResponse(CommonMessage.EmailVerificationSendSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public dynamic VerifyEmailConfirmation(int id)
+        {
+            try
+            {
+                var usersData = _context.Users.Where(x => x.UserId == id).FirstOrDefault();
+                if (usersData == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status400BadRequest);
+
+                usersData.IsEmailVerified = true;
+                _context.Users.Update(usersData);
+                _context.SaveChanges();
+                return ReturnResponse.SuccessResponse(CommonMessage.EmailVerificationSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
     }
 }

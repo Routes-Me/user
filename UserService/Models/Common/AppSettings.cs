@@ -11,5 +11,7 @@ namespace UserService.Models.Common
         public string ValidAudience { get; set; }
         public string ValidIssuer { get; set; }
         public string VehicleEndpointUrl { get; set; }
+        public string IV { get; set; }
+        public string PASSWORD { get; set; }
     }
 }

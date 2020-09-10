@@ -9,9 +9,9 @@ namespace UserService.Abstraction
 {
     public interface IRolesRepository
     {
-        RolesGetResponse GetRoles(int userRoleId, Pagination pageInfo);
-        RolesResponse DeleteRoles(int id);
-        RolesResponse InsertRoles(RolesModel model);
-        RolesResponse UpdateRoles(RolesModel model);
+        dynamic GetRoles(int userRoleId, Pagination pageInfo);
+        dynamic DeleteRoles(int id);
+        dynamic InsertRoles(RolesModel model);
+        dynamic UpdateRoles(RolesModel model);
     }
 }

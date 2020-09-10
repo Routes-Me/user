@@ -14,117 +14,49 @@ namespace UserService.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class AccountController : BaseController
+    public class AccountController : ControllerBase
     {
-        private readonly IUserRepository _usersRepository;
+        private readonly IAccountRepository _accountRepository;
+        private readonly IVerificationRepository _verificationRepository;
         private static readonly HttpClient HttpClient = new HttpClient();
-        public AccountController(IUserRepository usersRepository)
+        public AccountController(IAccountRepository accountRepository, IVerificationRepository verificationRepository)
         {
-            _usersRepository = usersRepository;
-        }
-
-        [HttpPost]
-        [Route("v1/{signin}")]
-        public IActionResult Signin(SigninModel model)
-        {
-            var response = _usersRepository.SignIn(model);
-            if (response.errorResponse != null)
-                return GetErrorResult(response.errorResponse);
-            return Ok(response.response);
-        }
-
-        [HttpPost]
-        [Route("v2/signin")]
-        public async Task<IActionResult> Signin(SignInOTPModel model)
-        {
-            SignInV2Response response = new SignInV2Response();
-            response = await _usersRepository.SendSignInOTP(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
-        }
-
-        [HttpPost]
-        [Route("v2/{verifysignin}")]
-        public async Task<IActionResult> VerifySigninOTP(VerifySignInOTPModel model)
-        {
-            SignInResponse response = new SignInResponse();
-            response = await _usersRepository.VerifySignInOTP(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
+            _accountRepository = accountRepository;
+            _verificationRepository = verificationRepository;
         }
 
         [HttpPost]
         [Route("signup")]
         public IActionResult Signup(RegistrationModel model)
         {
-            UsersResponse response = new UsersResponse();
-            response = _usersRepository.SignUp(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
+            dynamic response = _accountRepository.SignUp(model);
+            return StatusCode((int)response.statusCode, response);
         }
 
         [HttpPost]
-        [Route("v2/signup")]
-        public IActionResult APISignup(APIRegistrationModel model)
+        [Route("signin")]
+        public IActionResult Signin(SigninModel model)
         {
-            UsersResponse response = new UsersResponse();
-            if (ModelState.IsValid)
-                 response = _usersRepository.APISignUp(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
+            dynamic response = _accountRepository.SignIn(model);
+            if (response.Item1 != null)
+                return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1.errors);
+            return StatusCode((int)response.Item2.statusCode, response.Item2);
         }
 
         [HttpPut]
         [Route("changepassword")]
         public IActionResult ChangePassword(ChangePasswordModel model)
         {
-            UsersResponse response = new UsersResponse();
-            if (ModelState.IsValid)
-                response = _usersRepository.ChangePassword(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
+            dynamic response = _accountRepository.ChangePassword(model);
+            return StatusCode((int)response.statusCode, response);
         }
 
-        // Send confirmation email
-        [HttpPost]
-        [Route("email/{confirm}")]
-        public async Task<IActionResult> SendConfirmationEmail(EmailModel model)
-        {
-            EmailResponse response = new EmailResponse();
-            response = await _usersRepository.SendConfirmationEmail(model);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
-        }
-
-        // Verify email
-        [AllowAnonymous]
-        [HttpGet]
-        [Route("email/{confirm}")]
-        public IActionResult VerifyEmail(int id)
-        {
-            EmailResponse response = new EmailResponse();
-            response = _usersRepository.VerifyEmail(id);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
-        }
-
-        // Send password to email
         [HttpPost]
         [Route("forgotpassword")]
         public async Task<IActionResult> ForgotPassword(string email)
         {
-            EmailResponse response = new EmailResponse();
-            response = await _usersRepository.ForgotPassword(email);
-            if (response.responseCode != ResponseCode.Success)
-                return GetActionResult(response);
-            return Ok(response);
+            dynamic response = await _accountRepository.ForgotPassword(email);
+            return StatusCode((int)response.statusCode, response);
         }
     }
 }

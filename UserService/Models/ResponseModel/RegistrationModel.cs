@@ -17,7 +17,7 @@ namespace UserService.Models.ResponseModel
         public int InstitutionId { get; set; }
     }
 
-    public class APIRegistrationModel
+    public class QRCodeRegistrationModel
     {
         public string Name { get; set; }
         public string UserName { get; set; }

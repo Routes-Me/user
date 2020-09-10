@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace UserService.DatabaseAccess.Repository
+namespace UserService.Models.ResponseModel
 {
-    public class UserDbAccessRepository
+    public class SendOTPModel
     {
+        public string Phone { get; set; }
     }
 }

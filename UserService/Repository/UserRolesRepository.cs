@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,53 +19,39 @@ namespace UserService.Repository
             _context = context;
         }
 
-        public RolesResponse DeleteRoles(int id)
+        public dynamic DeleteRoles(int id)
         {
             RolesResponse response = new RolesResponse();
             try
             {
-                var roles = _context.Roles.Where(x => x.RoleId == id).FirstOrDefault();
+                var roles = _context.Roles.Include(x => x.UsersRoles).Where(x => x.RoleId == id).FirstOrDefault();
                 if (roles == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
+            
+                if (roles.UsersRoles != null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.RoleConflict, StatusCodes.Status409Conflict);
+                
                 {
-                    response.status = false;
-                    response.message = "Role not found.";
-                    response.responseCode = ResponseCode.NotFound;
-                    return response;
+                    _context.UsersRoles.RemoveRange(roles.UsersRoles);
+                    _context.SaveChanges();
                 }
-
-                var userRoleData = _context.UsersRoles.Where(x => x.RoleId == id).FirstOrDefault();
-                if (userRoleData != null)
-                {
-                    response.status = false;
-                    response.message = "Role is associated with other user.";
-                    response.responseCode = ResponseCode.Conflict;
-                    return response;
-                }
-
                 _context.Roles.Remove(roles);
                 _context.SaveChanges();
-                response.status = true;
-                response.message = "Role deleted successfully.";
-                response.responseCode = ResponseCode.Success;
-                return response;
+                return ReturnResponse.SuccessResponse(CommonMessage.RoleDelete, false);
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Something went wrong while deleting role. Error Message - " + ex.Message;
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
 
-        public RolesGetResponse GetRoles(int userRoleId, Pagination pageInfo)
+        public dynamic GetRoles(int userRoleId, Pagination pageInfo)
         {
             RolesGetResponse response = new RolesGetResponse();
             int totalCount = 0;
             try
             {
                 List<RolesModel> userRolesModelList = new List<RolesModel>();
-
                 if (userRoleId == 0)
                 {
                     userRolesModelList = (from userRole in _context.Roles
@@ -91,14 +79,8 @@ namespace UserService.Repository
 
                     totalCount = _context.Roles.Where(x => x.RoleId == userRoleId).ToList().Count();
                 }
-
                 if (userRolesModelList == null || userRolesModelList.Count == 0)
-                {
-                    response.status = false;
-                    response.message = "Role not found.";
-                    response.responseCode = ResponseCode.NotFound;
-                    return response;
-                }
+                    return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 
                 var page = new Pagination
                 {
@@ -107,35 +89,25 @@ namespace UserService.Repository
                     total = totalCount
                 };
 
-
                 response.status = true;
-                response.message = "Roles data retrived successfully.";
+                response.message = CommonMessage.RoleRetrived;
                 response.pagination = page;
                 response.data = userRolesModelList;
-                response.responseCode = ResponseCode.Success;
+                response.statusCode = StatusCodes.Status200OK;
                 return response;
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Something went wrong while fetching roles. Error Message - " + ex.Message;
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
 
-        public RolesResponse InsertRoles(RolesModel model)
+        public dynamic InsertRoles(RolesModel model)
         {
-            RolesResponse response = new RolesResponse();
             try
             {
                 if (model == null)
-                {
-                    response.status = false;
-                    response.message = "Pass valid data in model.";
-                    response.responseCode = ResponseCode.BadRequest;
-                    return response;
-                }
+                    return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
                 Roles role = new Roles()
                 {
@@ -143,61 +115,37 @@ namespace UserService.Repository
                     Description = model.Description,
                     Name = model.Name
                 };
-
                 _context.Roles.Add(role);
                 _context.SaveChanges();
-                response.status = true;
-                response.message = "User role inserted successfully.";
-                response.responseCode = ResponseCode.Created;
-                return response;
+                return ReturnResponse.SuccessResponse(CommonMessage.RoleInsert, true);
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Something went wrong while inserting user role. Error Message - " + ex.Message;
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
 
-        public RolesResponse UpdateRoles(RolesModel model)
+        public dynamic UpdateRoles(RolesModel model)
         {
-            RolesResponse response = new RolesResponse();
             try
             {
                 if (model == null)
-                {
-                    response.status = false;
-                    response.message = "Pass valid data in model.";
-                    response.responseCode = ResponseCode.BadRequest;
-                    return response;
-                }
+                    return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
                 var userRolesData = _context.Roles.Where(x => x.RoleId == model.RoleId).FirstOrDefault();
                 if (userRolesData == null)
-                {
-                    response.status = false;
-                    response.message = "User role not found.";
-                    response.responseCode = ResponseCode.NotFound;
-                    return response;
-                }
+                    return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 
                 userRolesData.Application = model.Application;
                 userRolesData.Description = model.Description;
                 userRolesData.Name = model.Name;
                 _context.Roles.Update(userRolesData);
                 _context.SaveChanges();
-                response.status = true;
-                response.message = "Role updated successfully.";
-                response.responseCode = ResponseCode.Success;
-                return response;
+                return ReturnResponse.SuccessResponse(CommonMessage.RoleUpdate, false);
             }
             catch (Exception ex)
             {
-                response.status = false;
-                response.message = "Something went wrong while updating role. Error Message - " + ex.Message;
-                response.responseCode = ResponseCode.InternalServerError;
-                return response;
+                return ReturnResponse.ExceptionResponse(ex);
             }
         }
     }

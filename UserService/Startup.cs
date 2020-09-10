@@ -1,15 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,10 +13,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using UserService.Abstraction;
-using UserService.Helper;
 using UserService.Helper.Abstraction;
 using UserService.Helper.Repository;
-using UserService.Models;
 using UserService.Models.Common;
 using UserService.Models.DBModels;
 using UserService.Repository;
@@ -52,7 +45,7 @@ namespace UserService
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddDbContext<UserService.Models.DBModels.userserviceContext>(options =>
+            services.AddDbContext<userserviceContext>(options =>
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
             });
@@ -64,17 +57,14 @@ namespace UserService
             services.AddScoped<IHelperRepository, HelperRepository>();
             services.AddScoped<IPasswordHasherRepository, PasswordHasherRepository>();
             services.AddScoped<IVerificationRepository, VerificationRepository>();
+            services.AddScoped<IAccountRepository, AccountRepository>();
 
-            services.AddSingleton<IVerificationRepository>(new VerificationRepository(
+            services.AddSingleton<ITwilioVerificationRepository>(new TwilioVerificationRepository(
                 Configuration.GetSection("Twilio").Get<Configuration.Twilio>()));
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AppSettings>();
-
-            var azureConfigSection = Configuration.GetSection("AzureStorageBlobConfig");
-            services.Configure<AzureStorageBlobConfig>(azureConfigSection);
-            var azureConfig = azureConfigSection.Get<AzureStorageBlobConfig>();
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

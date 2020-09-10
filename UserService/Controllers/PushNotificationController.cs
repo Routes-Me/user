@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
@@ -13,7 +11,7 @@ namespace UserService.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class PushNotificationController : BaseController
+    public class PushNotificationController : ControllerBase
     {
         [HttpPost]
         [Route("pushnotification")]
