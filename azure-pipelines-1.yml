@@ -9,6 +9,7 @@ resources:
 - repo: self
 
 variables:
+
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: '02721cde-999a-419c-a022-23b2401c40c6'
   imageRepository: 'stageuserservice'
