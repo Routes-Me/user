@@ -39,10 +39,34 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
+        [Route("qrsendotp")]
+        public async Task<IActionResult> SendOTPForQRCode(SendOTPModel model)
+        {
+            dynamic response = await _verificationRepository.SendOTPForQRCode(model);
+            return StatusCode((int)response.statusCode, response);
+        }
+
+        [HttpPost]
+        [Route("qrverifyotp")]
+        public async Task<IActionResult> VerifyOTPForQRCode(VerifyOTPModel model)
+        {
+            dynamic response = await _verificationRepository.VerifyOTPForQRCode(model);
+            return StatusCode((int)response.statusCode, response);
+        }
+
+        [HttpPost]
         [Route("verifysigninotp")]
         public async Task<IActionResult> VerifySigninOTP(VerifyOTPModel model)
         {
             dynamic response = await _verificationRepository.VerifySigninOTP(model);
+            return StatusCode((int)response.statusCode, response);
+        }
+
+        [HttpPost]
+        [Route("qrverifysigninotp")]
+        public async Task<IActionResult> QRVerifySigninOTP(VerifyOTPModel model)
+        {
+            dynamic response = await _verificationRepository.QRVerifySigninOTP(model);
             return StatusCode((int)response.statusCode, response);
         }
 

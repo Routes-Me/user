@@ -14,8 +14,15 @@ namespace UserService.Abstraction
 
         Task<dynamic> VerifyOTP(VerifyOTPModel model);
 
+        Task<dynamic> SendOTPForQRCode(SendOTPModel model);
+
+        Task<dynamic> VerifyOTPForQRCode(VerifyOTPModel model);
+
         Task<dynamic> VerifySigninOTP(VerifyOTPModel model);
+
         Task<dynamic> SendEmailConfirmation(EmailModel model);
+
         dynamic VerifyEmailConfirmation(int id);
+        Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model);
     }
 }

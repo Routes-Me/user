@@ -39,6 +39,7 @@ namespace UserService.Repository
             UsersResponse response = new UsersResponse();
             try
             {
+                string originalPassword = string.Empty;
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
@@ -51,6 +52,9 @@ namespace UserService.Repository
                     if (userRole == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
                 }
+
+                if (string.IsNullOrEmpty(model.PhoneNumber) && string.IsNullOrEmpty(model.Email))
+                    return ReturnResponse.ErrorResponse(CommonMessage.EmailPhoneRequired, StatusCodes.Status400BadRequest);
 
                 if (!string.IsNullOrEmpty(model.PhoneNumber))
                 {
@@ -66,16 +70,19 @@ namespace UserService.Repository
                         return ReturnResponse.ErrorResponse(CommonMessage.EmailExist, StatusCodes.Status409Conflict);
                 }
 
-                var originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
-                if (originalPassword == "Unauthorized Access")
-                    return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                if (!string.IsNullOrEmpty(model.Password))
+                {
+                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    if (originalPassword == "Unauthorized Access")
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                }
 
                 Users users = new Users()
                 {
                     Name = model.Name,
                     Email = model.Email,
                     CreatedAt = DateTime.UtcNow,
-                    Password = _passwordHasherRepository.Hash(originalPassword),
+                    Password = string.IsNullOrEmpty(originalPassword) ? null : _passwordHasherRepository.Hash(originalPassword),
                     IsEmailVerified = false
                 };
                 _context.Users.Add(users);
@@ -216,7 +223,7 @@ namespace UserService.Repository
                 {
                     errorDetails.statusCode = StatusCodes.Status404NotFound;
                     errorDetails.code = 4;
-                    errorDetails.detail = CommonMessage.IncorrectUserRole; 
+                    errorDetails.detail = CommonMessage.IncorrectUserRole;
                     errorResponse.errors.Add(errorDetails);
                     return (errorResponse, null);
                 }
@@ -231,7 +238,7 @@ namespace UserService.Repository
 
                 _context.Users.Update(user);
                 _context.SaveChanges();
-                response.message = CommonMessage.LoginSuccess; 
+                response.message = CommonMessage.LoginSuccess;
                 response.status = true;
                 response.token = Token;
                 response.statusCode = StatusCodes.Status200OK;
@@ -317,6 +324,88 @@ namespace UserService.Repository
                     return ReturnResponse.ErrorResponse(CommonMessage.ForgotPasswordFailed, StatusCodes.Status500InternalServerError);
 
                 return ReturnResponse.SuccessResponse(CommonMessage.ForgotPasswordSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public dynamic QRSignin(SigninModel model)
+        {
+            QrSignInResponse response = new QrSignInResponse();
+            string originalPassword = string.Empty;
+            string phoneNumber = string.Empty;
+            try
+            {
+                Users user = new Users();
+                user = _context.Users.Where(x => x.Email == model.Username).FirstOrDefault();
+                if (user == null)
+                {
+                    var phoneUser = _context.Phones.Where(x => x.Number == model.Username).FirstOrDefault();
+                    if (phoneUser == null)
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
+
+                    phoneNumber = phoneUser.Number;
+                    user = _context.Users.Where(x => x.UserId == phoneUser.UserId).FirstOrDefault();
+                    if (user == null)
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
+                    
+                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    if (originalPassword == "Unauthorized Access")
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+
+                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
+                    if (!isVerified)
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
+                }
+                else
+                {
+                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    if (originalPassword == "Unauthorized Access")
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+
+                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
+                    if (!isVerified)
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
+                }
+
+                var usersRole = (from usersrole in _context.UsersRoles
+                                 join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                 where usersrole.UserId == user.UserId
+                                 select new Roles
+                                 {
+                                     RoleId = role.RoleId,
+                                     Application = role.Application,
+                                     Description = role.Description,
+                                     Name = role.Name
+                                 }).FirstOrDefault();
+
+                if (usersRole == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUserRole, StatusCodes.Status404NotFound);
+
+                TokenGenerator tokenGenerator = new TokenGenerator()
+                {
+                    UserId = user.UserId,
+                    Email = user.Email,
+                    RoleName = usersRole.Name
+                };
+                string token = _helper.GenerateToken(tokenGenerator);
+                _context.Users.Update(user);
+                _context.SaveChanges();
+                LoginUser loginUser = new LoginUser()
+                {
+                    UserId = Convert.ToString(user.UserId),
+                    Name = user.Name,
+                    Email = user.Email,
+                    Phone = phoneNumber,
+                    Token = token,
+                };
+                response.message = CommonMessage.LoginSuccess;
+                response.status = true;
+                response.user = loginUser;
+                response.statusCode = StatusCodes.Status200OK;
+                return response;
             }
             catch (Exception ex)
             {

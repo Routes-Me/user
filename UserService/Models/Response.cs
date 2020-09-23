@@ -43,7 +43,7 @@ namespace UserService.Models
         public static dynamic ErrorResponse(string message, int statusCode)
         {
             Response response = new Response();
-            response.status = true;
+            response.status = false;
             response.message = message;
             response.statusCode = statusCode;
             return response;
@@ -77,6 +77,11 @@ namespace UserService.Models
     {
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string token { get; set; }
+    }
+
+    public class QrSignInResponse : Response
+    {
+        public LoginUser user { get; set; }
     }
     #endregion
 

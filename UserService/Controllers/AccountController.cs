@@ -43,6 +43,14 @@ namespace UserService.Controllers
             return StatusCode((int)response.Item2.statusCode, response.Item2);
         }
 
+        [HttpPost]
+        [Route("qrsignin")]
+        public IActionResult QRSignin(SigninModel model)
+        {
+            dynamic response = _accountRepository.QRSignin(model);
+            return StatusCode((int)response.statusCode, response);
+        }
+
         [HttpPut]
         [Route("changepassword")]
         public IActionResult ChangePassword(ChangePasswordModel model)

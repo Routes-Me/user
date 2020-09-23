@@ -13,5 +13,6 @@ namespace UserService.Abstraction
         (ErrorResponse errorResponse, SignInResponse response) SignIn(SigninModel model);
         dynamic ChangePassword(ChangePasswordModel model);
         Task<dynamic> ForgotPassword(string email);
+        dynamic QRSignin(SigninModel model);
     }
 }

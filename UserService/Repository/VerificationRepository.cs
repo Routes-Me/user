@@ -84,6 +84,47 @@ namespace UserService.Repository
             }
         }
 
+        public async Task<dynamic> SendOTPForQRCode(SendOTPModel model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
+
+                bool result = await _twilioVerificationRepository.TwilioVerificationResource(model.Phone);
+                if (!result)
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpSendFailed, StatusCodes.Status500InternalServerError);
+
+                return ReturnResponse.SuccessResponse(CommonMessage.OtpSendSuccess, false);
+            }
+            catch (TwilioException ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public async Task<dynamic> VerifyOTPForQRCode(VerifyOTPModel model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
+
+                if (string.IsNullOrEmpty(model.Code))
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpNotFound, StatusCodes.Status400BadRequest);
+
+                bool result = await _twilioVerificationRepository.TwilioVerificationCheckResource(model.Phone, model.Code);
+                if (!result)
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpInvalid, StatusCodes.Status401Unauthorized);
+
+                return ReturnResponse.SuccessResponse(CommonMessage.OtpVerifiedSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
         public async Task<dynamic> VerifySigninOTP(VerifyOTPModel model)
         {
             try
@@ -174,6 +215,63 @@ namespace UserService.Repository
                 _context.Users.Update(usersData);
                 _context.SaveChanges();
                 return ReturnResponse.SuccessResponse(CommonMessage.EmailVerificationSuccess, false);
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public async Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model)
+        {
+            try
+            {
+                QrSignInResponse response = new QrSignInResponse();
+                if (string.IsNullOrEmpty(model.Phone))
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
+
+                if (string.IsNullOrEmpty(model.Code))
+                    return ReturnResponse.ErrorResponse(CommonMessage.OtpRequired, StatusCodes.Status400BadRequest);
+
+                var phone = _context.Phones.Include(x => x.User).Include(x => x.User.UsersRoles).Where(x => x.Number == model.Phone).FirstOrDefault();
+                if (phone == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneNotExist, StatusCodes.Status404NotFound);
+
+                if (phone.User == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotExist, StatusCodes.Status404NotFound);
+
+                if (phone.User.UsersRoles == null)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
+
+                TokenGenerator tokenGenerator = new TokenGenerator();
+                foreach (var item in phone.User.UsersRoles)
+                {
+                    var role = _context.Roles.Where(x => x.RoleId == item.RoleId).FirstOrDefault();
+                    if (role == null)
+                        return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
+
+                    tokenGenerator.RoleName = role.Name;
+                }
+                tokenGenerator.UserId = phone.User.UserId;
+                tokenGenerator.Email = phone.User.Email;
+                var result = await VerifyOTP(model);
+                if (result.statusCode != StatusCodes.Status200OK)
+                    return ReturnResponse.ErrorResponse(result.message, result.statusCode);
+
+                string token = _helper.GenerateToken(tokenGenerator);
+                LoginUser loginUser = new LoginUser()
+                {
+                    UserId = Convert.ToString(phone.User.UserId),
+                    Name = phone.User.Name,
+                    Email = phone.User.Email,
+                    Phone = phone.Number,
+                    Token = token,
+                };
+                response.message = CommonMessage.LoginSuccess;
+                response.status = true;
+                response.user = loginUser;
+                response.statusCode = StatusCodes.Status200OK;
+                return response;
             }
             catch (Exception ex)
             {

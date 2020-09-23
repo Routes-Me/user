@@ -52,5 +52,8 @@ namespace UserService.Models
         public static string RoleInsert = "Role inserted successfully.";
         public static string RoleUpdate = "Role updated successfully.";
         public static string ExceptionMessage = "Something went wrong. Error Message - ";
+
+        public static string EmailPhoneRequired = "Email or phone is invalid";
+
     }
 }       
