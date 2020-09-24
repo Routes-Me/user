@@ -17,6 +17,7 @@ namespace UserService.Models
         public static string UserInsert = "User created successfully.";
         public static string IncorrectUser = "Incorrect username.";
         public static string IncorrectPassword = "Incorrect password.";
+        public static string InvalidPasswordFormat = "Incorrect encrypted password string format.";
         public static string IncorrectUserRole = "Incorrect user role.";
         public static string LoginSuccess = "Login successfully.";
         public static string GenericException = "Something went wrong while login. Error Message - ";
@@ -28,6 +29,7 @@ namespace UserService.Models
         public static string EmailRequired = "Email is required.";
         public static string RedirectUrlRequired = "Redirect Url is required.";   
         public static string UserNotFound = "User not found.";
+        public static string PhoneNotVerified = "Phone is not verified.";
         public static string EmailNotBelongToUser = "Email does not belongs to this user.";
         public static string EmailVerificationNotSend = "Verification email not send. Please contact to the support team.";
         public static string EmailVerificationSendSuccess = "Email verification sent successfully. Please Check your inbox.";

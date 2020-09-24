@@ -19,12 +19,12 @@ namespace UserService.Repository
             _context = context;
         }
 
-        public dynamic DeleteRoles(int id)
+        public dynamic DeleteRoles(string id)
         {
             RolesResponse response = new RolesResponse();
             try
             {
-                var roles = _context.Roles.Include(x => x.UsersRoles).Where(x => x.RoleId == id).FirstOrDefault();
+                var roles = _context.Roles.Include(x => x.UsersRoles).Where(x => x.RoleId == Convert.ToInt32(id)).FirstOrDefault();
                 if (roles == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
             
@@ -45,19 +45,19 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic GetRoles(int userRoleId, Pagination pageInfo)
+        public dynamic GetRoles(string userRoleId, Pagination pageInfo)
         {
             RolesGetResponse response = new RolesGetResponse();
             int totalCount = 0;
             try
             {
                 List<RolesModel> userRolesModelList = new List<RolesModel>();
-                if (userRoleId == 0)
+                if (userRoleId == "0")
                 {
                     userRolesModelList = (from userRole in _context.Roles
                                           select new RolesModel()
                                           {
-                                              RoleId = userRole.RoleId,
+                                              RoleId = userRole.RoleId.ToString(),
                                               Application = userRole.Application,
                                               Description = userRole.Description,
                                               Name = userRole.Name
@@ -68,16 +68,16 @@ namespace UserService.Repository
                 else
                 {
                     userRolesModelList = (from userRole in _context.Roles
-                                          where userRole.RoleId == userRoleId
+                                          where userRole.RoleId == Convert.ToInt32(userRoleId)
                                           select new RolesModel()
                                           {
-                                              RoleId = userRole.RoleId,
+                                              RoleId = userRole.RoleId.ToString(),
                                               Application = userRole.Application,
                                               Description = userRole.Description,
                                               Name = userRole.Name
                                           }).OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
-                    totalCount = _context.Roles.Where(x => x.RoleId == userRoleId).ToList().Count();
+                    totalCount = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(userRoleId)).ToList().Count();
                 }
                 if (userRolesModelList == null || userRolesModelList.Count == 0)
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
@@ -132,7 +132,7 @@ namespace UserService.Repository
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
-                var userRolesData = _context.Roles.Where(x => x.RoleId == model.RoleId).FirstOrDefault();
+                var userRolesData = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(model.RoleId)).FirstOrDefault();
                 if (userRolesData == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 

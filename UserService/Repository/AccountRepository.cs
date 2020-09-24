@@ -24,17 +24,19 @@ namespace UserService.Repository
         private readonly IHelperRepository _helper;
         private readonly IPasswordHasherRepository _passwordHasherRepository;
         private readonly AppSettings _appSettings;
+        private readonly Dependencies _dependencies;
         EncryptionClass encryption = new EncryptionClass();
 
-        public AccountRepository(IOptions<AppSettings> appSettings, userserviceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository)
+        public AccountRepository(IOptions<AppSettings> appSettings, userserviceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository, IOptions<Dependencies> dependencies)
         {
             _appSettings = appSettings.Value;
             _context = context;
             _helper = helper;
             _passwordHasherRepository = passwordHasherRepository;
+            _dependencies = dependencies.Value;
         }
 
-        public dynamic SignUp(RegistrationModel model)
+        public async Task<dynamic> SignUp(RegistrationModel model)
         {
             UsersResponse response = new UsersResponse();
             try
@@ -72,7 +74,7 @@ namespace UserService.Repository
 
                 if (!string.IsNullOrEmpty(model.Password))
                 {
-                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
                 }
@@ -109,15 +111,15 @@ namespace UserService.Repository
                     _context.UsersRoles.Add(usersroles);
                 }
                 _context.SaveChanges();
-                if (model.InstitutionId != 0)
+                if (Convert.ToInt32(model.InstitutionId) != 0)
                 {
                     DriversModel driver = new DriversModel()
                     {
                         InstitutionId = model.InstitutionId,
-                        UserId = users.UserId
+                        UserId = users.UserId.ToString()
                     };
 
-                    var client = new RestClient(_appSettings.VehicleEndpointUrl);
+                    var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
                     var request = new RestRequest(Method.POST);
                     string jsonToSend = JsonConvert.SerializeObject(driver);
                     request.AddParameter("application/json; charset=utf-8", jsonToSend, ParameterType.RequestBody);
@@ -135,7 +137,7 @@ namespace UserService.Repository
                 response.message = CommonMessage.UserInsert;
                 response.statusCode = StatusCodes.Status201Created;
                 response.Email = model.Email;
-                response.UserId = users.UserId;
+                response.UserId = users.UserId.ToString();
                 return response;
             }
             catch (Exception ex)
@@ -144,7 +146,7 @@ namespace UserService.Repository
             }
         }
 
-        public (ErrorResponse errorResponse, SignInResponse response) SignIn(SigninModel model)
+        public async Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model)
         {
             SignInResponse response = new SignInResponse();
             ErrorResponse errorResponse = new ErrorResponse();
@@ -177,7 +179,7 @@ namespace UserService.Repository
                         return (errorResponse, null);
                     }
 
-                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -193,7 +195,7 @@ namespace UserService.Repository
                 }
                 else
                 {
-                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -254,7 +256,7 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic ChangePassword(ChangePasswordModel model)
+        public async Task<dynamic> ChangePassword(ChangePasswordModel model)
         {
             UsersResponse response = new UsersResponse();
             string originalPassword = string.Empty;
@@ -267,7 +269,7 @@ namespace UserService.Repository
                 user = _context.Users.Where(x => x.Email == model.Username).FirstOrDefault();
                 if (user == null)
                 {
-                    var phoneUser = _context.Phones.Where(x => x.Number == model.Username).FirstOrDefault();
+                    var phoneUser = _context.Phones.Include(x => x.User).Where(x => x.Number == model.Username).FirstOrDefault();
                     if (phoneUser == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
@@ -275,7 +277,7 @@ namespace UserService.Repository
                     if (user == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
-                    originalPassword = encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -284,7 +286,7 @@ namespace UserService.Repository
                 }
                 else
                 {
-                    originalPassword = encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -292,7 +294,7 @@ namespace UserService.Repository
                         return ReturnResponse.ErrorResponse(CommonMessage.ChangePasswordFailed, StatusCodes.Status401Unauthorized);
                 }
 
-                originalPassword = encryption.DecodeAndDecrypt(model.NewPassword, _appSettings.IV, _appSettings.PASSWORD);
+                originalPassword = await encryption.DecodeAndDecrypt(model.NewPassword, _appSettings.IV, _appSettings.PASSWORD);
                 if (originalPassword == "Unauthorized Access")
                     return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -331,7 +333,7 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic QRSignin(SigninModel model)
+        public async Task<dynamic> QRSignin(SigninModel model)
         {
             QrSignInResponse response = new QrSignInResponse();
             string originalPassword = string.Empty;
@@ -351,7 +353,7 @@ namespace UserService.Repository
                     if (user == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
                     
-                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -361,7 +363,7 @@ namespace UserService.Repository
                 }
                 else
                 {
-                    originalPassword = encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 

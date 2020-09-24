@@ -23,7 +23,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("sendotp")]
+        [Route("otp")]
         public async Task<IActionResult> SendOTP(SendOTPModel model)
         {
             dynamic response = await _verificationRepository.SendOTP(model);
@@ -31,7 +31,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("verifyotp")]
+        [Route("otp/verify")]
         public async Task<IActionResult> VerifyOTP(VerifyOTPModel model)
         {
             dynamic response = await _verificationRepository.VerifyOTP(model);
@@ -39,7 +39,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("qrsendotp")]
+        [Route("qr/otp")]
         public async Task<IActionResult> SendOTPForQRCode(SendOTPModel model)
         {
             dynamic response = await _verificationRepository.SendOTPForQRCode(model);
@@ -47,7 +47,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("qrverifyotp")]
+        [Route("qr/otp/verify")]
         public async Task<IActionResult> VerifyOTPForQRCode(VerifyOTPModel model)
         {
             dynamic response = await _verificationRepository.VerifyOTPForQRCode(model);
@@ -55,7 +55,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("verifysigninotp")]
+        [Route("signin/otp/verify")]
         public async Task<IActionResult> VerifySigninOTP(VerifyOTPModel model)
         {
             dynamic response = await _verificationRepository.VerifySigninOTP(model);
@@ -63,7 +63,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("qrverifysigninotp")]
+        [Route("qr/signin/otp/verify")]
         public async Task<IActionResult> QRVerifySigninOTP(VerifyOTPModel model)
         {
             dynamic response = await _verificationRepository.QRVerifySigninOTP(model);
@@ -71,7 +71,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("sendemailconfirmation")]
+        [Route("email")]
         public async Task<IActionResult> SendEmailConfirmation(EmailModel model)
         {
             dynamic response = await _verificationRepository.SendEmailConfirmation(model);
@@ -80,8 +80,8 @@ namespace UserService.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        [Route("verifyemailconfirmation")]
-        public IActionResult VerifyEmailConfirmation(int id)
+        [Route("email/verify")]
+        public IActionResult VerifyEmailConfirmation(string id)
         {
             dynamic response = _verificationRepository.VerifyEmailConfirmation(id);
             return StatusCode((int)response.statusCode, response);

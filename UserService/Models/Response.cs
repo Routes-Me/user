@@ -88,7 +88,7 @@ namespace UserService.Models
     #region User Response
     public class UsersResponse : Response
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public string Email { get; set; }
     }
 
@@ -104,7 +104,7 @@ namespace UserService.Models
 
     public class DriversModel
     {
-        public int? UserId { get; set; }
-        public int? InstitutionId { get; set; }
+        public string UserId { get; set; }
+        public string InstitutionId { get; set; }
     }
 }

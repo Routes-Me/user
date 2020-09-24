@@ -27,40 +27,40 @@ namespace UserService.Controllers
 
         [HttpPost]
         [Route("signup")]
-        public IActionResult Signup(RegistrationModel model)
+        public async Task<IActionResult> Signup(RegistrationModel model)
         {
-            dynamic response = _accountRepository.SignUp(model);
+            dynamic response = await _accountRepository.SignUp(model);
             return StatusCode((int)response.statusCode, response);
         }
 
         [HttpPost]
         [Route("signin")]
-        public IActionResult Signin(SigninModel model)
+        public async Task<IActionResult> Signin(SigninModel model)
         {
-            dynamic response = _accountRepository.SignIn(model);
+            dynamic response = await _accountRepository.SignIn(model);
             if (response.Item1 != null)
                 return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1.errors);
             return StatusCode((int)response.Item2.statusCode, response.Item2);
         }
 
         [HttpPost]
-        [Route("qrsignin")]
-        public IActionResult QRSignin(SigninModel model)
+        [Route("qr/signin")]
+        public async Task<IActionResult> QRSignin(SigninModel model)
         {
-            dynamic response = _accountRepository.QRSignin(model);
+            dynamic response = await _accountRepository.QRSignin(model);
             return StatusCode((int)response.statusCode, response);
         }
 
         [HttpPut]
-        [Route("changepassword")]
-        public IActionResult ChangePassword(ChangePasswordModel model)
+        [Route("account/password")]
+        public async Task<IActionResult> ChangePassword(ChangePasswordModel model)
         {
-            dynamic response = _accountRepository.ChangePassword(model);
+            dynamic response = await _accountRepository.ChangePassword(model);
             return StatusCode((int)response.statusCode, response);
         }
 
         [HttpPost]
-        [Route("forgotpassword")]
+        [Route("account/password")]
         public async Task<IActionResult> ForgotPassword(string email)
         {
             dynamic response = await _accountRepository.ForgotPassword(email);

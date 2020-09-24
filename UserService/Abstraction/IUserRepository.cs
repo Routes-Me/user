@@ -10,8 +10,8 @@ namespace UserService.Abstraction
 {
     public interface IUserRepository
     {
-        dynamic DeleteUser(int id);
+        dynamic DeleteUser(string id);
         dynamic UpdateUser(RegistrationModel model);
-        dynamic GetUser(int userId, Pagination pageInfo);
+        dynamic GetUser(string userId, Pagination pageInfo);
     }
 }

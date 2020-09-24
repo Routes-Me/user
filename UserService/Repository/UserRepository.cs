@@ -1,32 +1,12 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Blob;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using RestSharp;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UserService.Abstraction;
-using UserService.Helper.Abstraction;
 using UserService.Models;
-using UserService.Models.Common;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
-using System.Runtime;
-using RestSharp.Serialization;
-using System.Text.RegularExpressions;
-using Encryption;
 
 namespace UserService.Repository
 {
@@ -38,11 +18,11 @@ namespace UserService.Repository
             _context = context;
         }
 
-        public dynamic DeleteUser(int id)
+        public dynamic DeleteUser(string id)
         {
             try
             {
-                var users = _context.Users.Include(x => x.Phones).Include(x => x.UsersRoles).Where(x => x.UserId == id).FirstOrDefault();
+                var users = _context.Users.Include(x => x.Phones).Include(x => x.UsersRoles).Where(x => x.UserId == Convert.ToInt32(id)).FirstOrDefault();
                 if (users == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
@@ -73,7 +53,7 @@ namespace UserService.Repository
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
-                var user = _context.Users.Include(x => x.UsersRoles).Include(x => x.Phones).Where(x => x.UserId == model.UserId).FirstOrDefault();
+                var user = _context.Users.Include(x => x.UsersRoles).Include(x => x.Phones).Where(x => x.UserId == Convert.ToInt32(model.UserId)).FirstOrDefault();
                 if (user == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
@@ -94,21 +74,21 @@ namespace UserService.Repository
                 {
                     UsersRoles usersroles = new UsersRoles()
                     {
-                        UserId = model.UserId,
+                        UserId = Convert.ToInt32(model.UserId),
                         RoleId = role
                     };
                     _context.UsersRoles.Add(usersroles);
                 }
                 _context.SaveChanges();
 
-                var userPhone = user.Phones.Where(x => x.UserId == model.UserId).FirstOrDefault();
+                var userPhone = user.Phones.Where(x => x.UserId == Convert.ToInt32(model.UserId)).FirstOrDefault();
                 if (userPhone == null)
                 {
                     Phones newPhone = new Phones()
                     {
                         IsVerified = false,
                         Number = model.PhoneNumber,
-                        UserId = model.UserId
+                        UserId = Convert.ToInt32(model.UserId)
                     };
                     _context.Phones.Add(newPhone);
                 }
@@ -136,14 +116,14 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic GetUser(int userId, Pagination pageInfo)
+        public dynamic GetUser(string userId, Pagination pageInfo)
         {
             try
             {
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersModel> usersModelList = new List<UsersModel>();
-                if (userId == 0)
+                if (userId == "0")
                 {
                     usersModelList = (from user in _context.Users
                                       join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
@@ -151,7 +131,7 @@ namespace UserService.Repository
                                       join phone in _context.Phones on user.UserId equals phone.UserId
                                       select new UsersModel
                                       {
-                                          UserId = user.UserId,
+                                          UserId = user.UserId.ToString(),
                                           Phone = phone.Number,
                                           Email = user.Email,
                                           CreatedAt = user.CreatedAt,
@@ -166,7 +146,7 @@ namespace UserService.Repository
                                   join phone in _context.Phones on user.UserId equals phone.UserId
                                   select new UsersModel
                                   {
-                                      UserId = user.UserId,
+                                      UserId = user.UserId.ToString(),
                                       Phone = phone.Number,
                                       Email = user.Email,
                                       CreatedAt = user.CreatedAt,
@@ -181,10 +161,10 @@ namespace UserService.Repository
                                       join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
                                       join role in _context.Roles on usersRole.RoleId equals role.RoleId
                                       join phone in _context.Phones on user.UserId equals phone.UserId
-                                      where user.UserId == userId
+                                      where user.UserId == Convert.ToInt32(userId)
                                       select new UsersModel
                                       {
-                                          UserId = user.UserId,
+                                          UserId = user.UserId.ToString(),
                                           Phone = phone.Number,
                                           Email = user.Email,
                                           CreatedAt = user.CreatedAt,
@@ -197,10 +177,10 @@ namespace UserService.Repository
                                   join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
                                   join role in _context.Roles on usersRole.RoleId equals role.RoleId
                                   join phone in _context.Phones on user.UserId equals phone.UserId
-                                  where user.UserId == userId
+                                  where user.UserId == Convert.ToInt32(userId)
                                   select new UsersModel
                                   {
-                                      UserId = user.UserId,
+                                      UserId = user.UserId.ToString(),
                                       Phone = phone.Number,
                                       Email = user.Email,
                                       CreatedAt = user.CreatedAt,

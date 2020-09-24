@@ -184,14 +184,14 @@ namespace UserService.Repository
                 if (string.IsNullOrEmpty(model.RedirectUrl))
                     return ReturnResponse.ErrorResponse(CommonMessage.RedirectUrlRequired, StatusCodes.Status400BadRequest);
 
-                var userData = _context.Users.Where(x => x.UserId == model.UserId).FirstOrDefault();
+                var userData = _context.Users.Where(x => x.UserId == Convert.ToInt32(model.UserId)).FirstOrDefault();
                 if (userData == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
                 if (userData.Email.ToLower() != model.Email.ToLower())
                     return ReturnResponse.ErrorResponse(CommonMessage.EmailNotBelongToUser, StatusCodes.Status404NotFound);
 
-                var res = await _helper.SendConfirmationEmail(model.UserId, model.Email, model.RedirectUrl);
+                var res = await _helper.SendConfirmationEmail(Convert.ToInt32(model.UserId), model.Email, model.RedirectUrl);
                 if (res.StatusCode != HttpStatusCode.Accepted)
                     return ReturnResponse.ErrorResponse(CommonMessage.EmailVerificationNotSend, StatusCodes.Status500InternalServerError);
 
@@ -203,11 +203,11 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic VerifyEmailConfirmation(int id)
+        public dynamic VerifyEmailConfirmation(string id)
         {
             try
             {
-                var usersData = _context.Users.Where(x => x.UserId == id).FirstOrDefault();
+                var usersData = _context.Users.Where(x => x.UserId == Convert.ToInt32(id)).FirstOrDefault();
                 if (usersData == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status400BadRequest);
 

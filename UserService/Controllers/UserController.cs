@@ -19,7 +19,7 @@ namespace UserService.Controllers
 
         [HttpGet]
         [Route("users/{id=0}")]
-        public IActionResult Get(int id, [FromQuery] Pagination pageInfo)
+        public IActionResult Get(string id, [FromQuery] Pagination pageInfo)
         {
             dynamic response = _usersRepository.GetUser(id, pageInfo);
             return StatusCode((int)response.statusCode, response);
@@ -27,7 +27,7 @@ namespace UserService.Controllers
 
         [HttpDelete]
         [Route("users/{id}")]
-        public IActionResult delete(int id)
+        public IActionResult delete(string id)
         {
             dynamic response = _usersRepository.DeleteUser(id);
             return StatusCode((int)response.statusCode, response);

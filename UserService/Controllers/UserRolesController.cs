@@ -22,7 +22,7 @@ namespace UserService.Controllers
 
         [HttpGet]
         [Route("roles/{id=0}")]
-        public IActionResult Get(int id, [FromQuery] Pagination pageInfo)
+        public IActionResult Get(string id, [FromQuery] Pagination pageInfo)
         {
             dynamic response = _rolesRepository.GetRoles(id, pageInfo);
             return StatusCode((int)response.statusCode, response);
@@ -46,7 +46,7 @@ namespace UserService.Controllers
 
         [HttpDelete]
         [Route("roles/{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(string id)
         {
             dynamic response = _rolesRepository.DeleteRoles(id);
             return StatusCode((int)response.statusCode, response);
