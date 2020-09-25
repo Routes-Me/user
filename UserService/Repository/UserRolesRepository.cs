@@ -59,8 +59,7 @@ namespace UserService.Repository
                                           {
                                               RoleId = userRole.RoleId.ToString(),
                                               Application = userRole.Application,
-                                              Description = userRole.Description,
-                                              Name = userRole.Name
+                                              Privilege = userRole.Privilege
                                           }).OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.ToList().Count();
@@ -73,8 +72,7 @@ namespace UserService.Repository
                                           {
                                               RoleId = userRole.RoleId.ToString(),
                                               Application = userRole.Application,
-                                              Description = userRole.Description,
-                                              Name = userRole.Name
+                                              Privilege = userRole.Privilege
                                           }).OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(userRoleId)).ToList().Count();
@@ -112,8 +110,7 @@ namespace UserService.Repository
                 Roles role = new Roles()
                 {
                     Application = model.Application,
-                    Description = model.Description,
-                    Name = model.Name
+                    Privilege = model.Privilege
                 };
                 _context.Roles.Add(role);
                 _context.SaveChanges();
@@ -137,8 +134,7 @@ namespace UserService.Repository
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 
                 userRolesData.Application = model.Application;
-                userRolesData.Description = model.Description;
-                userRolesData.Name = model.Name;
+                userRolesData.Privilege = model.Privilege;
                 _context.Roles.Update(userRolesData);
                 _context.SaveChanges();
                 return ReturnResponse.SuccessResponse(CommonMessage.RoleUpdate, false);

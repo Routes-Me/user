@@ -61,19 +61,13 @@ namespace UserService.Models.DBModels
 
                 entity.Property(e => e.Application)
                     .HasColumnName("application")
-                    .HasColumnType("enum('screen','driver','dashboard')")
+                    .HasColumnType("enum('screen','driver','dashboard','userapp')")
                     .HasCharSet("utf8mb4")
                     .HasCollation("utf8mb4_0900_ai_ci");
 
-                entity.Property(e => e.Description)
-                    .HasColumnName("description")
-                    .HasColumnType("varchar(255)")
-                    .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
-
-                entity.Property(e => e.Name)
-                    .HasColumnName("name")
-                    .HasColumnType("varchar(50)")
+                entity.Property(e => e.Privilege)
+                    .HasColumnName("privilege")
+                    .HasColumnType("enum('super','chife','employee','user')")
                     .HasCharSet("utf8mb4")
                     .HasCollation("utf8mb4_0900_ai_ci");
             });
@@ -89,7 +83,7 @@ namespace UserService.Models.DBModels
 
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("created_at")
-                    .HasColumnType("datetime");
+                    .HasColumnType("timestamp");
 
                 entity.Property(e => e.Email)
                     .HasColumnName("email")
@@ -98,6 +92,10 @@ namespace UserService.Models.DBModels
                     .HasCollation("utf8mb4_0900_ai_ci");
 
                 entity.Property(e => e.IsEmailVerified).HasColumnName("is_email_verified");
+
+                entity.Property(e => e.LastLoginDate)
+                    .HasColumnName("last_login_date")
+                    .HasColumnType("datetime");
 
                 entity.Property(e => e.Name)
                     .HasColumnName("name")

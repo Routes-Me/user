@@ -17,6 +17,7 @@ namespace UserService.Models.DBModels
         public string Password { get; set; }
         public DateTime? CreatedAt { get; set; }
         public bool? IsEmailVerified { get; set; }
+        public DateTime? LastLoginDate { get; set; }
 
         public virtual ICollection<Phones> Phones { get; set; }
         public virtual ICollection<UsersRoles> UsersRoles { get; set; }

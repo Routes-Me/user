@@ -153,7 +153,7 @@ namespace UserService.Repository
                     if (role == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
 
-                    tokenGenerator.RoleName = role.Name;
+                    tokenGenerator.RoleName = role.Privilege;
                 }
                 tokenGenerator.UserId = phone.User.UserId;
                 tokenGenerator.Email = phone.User.Email;
@@ -250,7 +250,7 @@ namespace UserService.Repository
                     if (role == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
 
-                    tokenGenerator.RoleName = role.Name;
+                    tokenGenerator.RoleName = role.Privilege;
                 }
                 tokenGenerator.UserId = phone.User.UserId;
                 tokenGenerator.Email = phone.User.Email;

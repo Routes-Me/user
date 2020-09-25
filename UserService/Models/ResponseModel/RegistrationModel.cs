@@ -12,7 +12,7 @@ namespace UserService.Models.ResponseModel
         public string PhoneNumber { get; set; }
         public string Password { get; set; }
         public bool? IsVerified { get; set; }
-        public List<int> Roles { get; set; }
+        public List<privilege> Roles { get; set; }
         public string Name { get; set; }
         public string InstitutionId { get; set; }
     }
@@ -23,5 +23,11 @@ namespace UserService.Models.ResponseModel
         public string UserName { get; set; }
         public string Password { get; set; }
         public List<int> Roles { get; set; }
+    }
+
+    public class privilege
+    {
+        public string Application { get; set; }
+        public string Privilege { get; set; }
     }
 }

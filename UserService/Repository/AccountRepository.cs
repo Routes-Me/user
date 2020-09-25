@@ -39,6 +39,7 @@ namespace UserService.Repository
         public async Task<dynamic> SignUp(RegistrationModel model)
         {
             UsersResponse response = new UsersResponse();
+            List<int> roles = new List<int>();
             try
             {
                 string originalPassword = string.Empty;
@@ -50,9 +51,13 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRole = _context.Roles.Where(x => x.RoleId == role).FirstOrDefault();
+                    var userRole = _context.Roles.Where(x => x.Application == role.Application).FirstOrDefault();
                     if (userRole == null)
+                    {
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
+                    }
+                    else
+                        roles.Add(userRole.RoleId);
                 }
 
                 if (string.IsNullOrEmpty(model.PhoneNumber) && string.IsNullOrEmpty(model.Email))
@@ -101,7 +106,8 @@ namespace UserService.Repository
                     _context.Phones.Add(phone);
                     _context.SaveChanges();
                 }
-                foreach (var role in model.Roles)
+                
+                foreach (var role in roles)
                 {
                     UsersRoles usersroles = new UsersRoles()
                     {
@@ -111,6 +117,7 @@ namespace UserService.Repository
                     _context.UsersRoles.Add(usersroles);
                 }
                 _context.SaveChanges();
+                
                 if (Convert.ToInt32(model.InstitutionId) != 0)
                 {
                     DriversModel driver = new DriversModel()
@@ -217,8 +224,7 @@ namespace UserService.Repository
                                  {
                                      RoleId = role.RoleId,
                                      Application = role.Application,
-                                     Description = role.Description,
-                                     Name = role.Name
+                                     Privilege = role.Privilege
                                  }).FirstOrDefault();
 
                 if (usersRole == null)
@@ -234,10 +240,11 @@ namespace UserService.Repository
                 {
                     UserId = user.UserId,
                     Email = user.Email,
-                    RoleName = usersRole.Name
+                    RoleName = usersRole.Privilege
                 };
                 string Token = _helper.GenerateToken(tokenGenerator);
 
+                user.LastLoginDate = DateTime.Now;
                 _context.Users.Update(user);
                 _context.SaveChanges();
                 response.message = CommonMessage.LoginSuccess;
@@ -379,8 +386,7 @@ namespace UserService.Repository
                                  {
                                      RoleId = role.RoleId,
                                      Application = role.Application,
-                                     Description = role.Description,
-                                     Name = role.Name
+                                     Privilege = role.Privilege
                                  }).FirstOrDefault();
 
                 if (usersRole == null)
@@ -390,7 +396,7 @@ namespace UserService.Repository
                 {
                     UserId = user.UserId,
                     Email = user.Email,
-                    RoleName = usersRole.Name
+                    RoleName = usersRole.Privilege
                 };
                 string token = _helper.GenerateToken(tokenGenerator);
                 _context.Users.Update(user);

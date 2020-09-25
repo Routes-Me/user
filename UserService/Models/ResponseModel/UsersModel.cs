@@ -13,7 +13,6 @@ namespace UserService.Models.ResponseModel
         public string Phone { get; set; }
         public DateTime? CreatedAt { get; set; }
         public string Application { get; set; }
-        public string Description { get; set; }
     }
 
     public class LoginUser

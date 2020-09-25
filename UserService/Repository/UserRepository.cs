@@ -50,6 +50,7 @@ namespace UserService.Repository
         {
             try
             {
+                List<int> roles = new List<int>();
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
@@ -59,9 +60,13 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRoles = _context.Roles.Where(x => x.RoleId == role).FirstOrDefault();
-                    if (userRoles == null)
+                    var userRole = _context.Roles.Where(x => x.Application == role.Application).FirstOrDefault();
+                    if (userRole == null)
+                    {
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
+                    }
+                    else
+                        roles.Add(userRole.RoleId);
                 }
 
                 if (user.UsersRoles != null)
@@ -70,7 +75,7 @@ namespace UserService.Repository
                     _context.SaveChanges();
                 }
 
-                foreach (var role in model.Roles)
+                foreach (var role in roles)
                 {
                     UsersRoles usersroles = new UsersRoles()
                     {
@@ -137,7 +142,6 @@ namespace UserService.Repository
                                           CreatedAt = user.CreatedAt,
                                           Name = user.Name,
                                           Application = role.Application,
-                                          Description = role.Description
                                       }).ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = (from user in _context.Users
@@ -152,7 +156,6 @@ namespace UserService.Repository
                                       CreatedAt = user.CreatedAt,
                                       Name = user.Name,
                                       Application = role.Application,
-                                      Description = role.Description
                                   }).ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().Count();
                 }
                 else
@@ -170,7 +173,6 @@ namespace UserService.Repository
                                           CreatedAt = user.CreatedAt,
                                           Name = user.Name,
                                           Application = role.Application,
-                                          Description = role.Description
                                       }).ToList().GroupBy(p => p.UserId).Select(g => g.First()).OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = (from user in _context.Users
@@ -186,7 +188,6 @@ namespace UserService.Repository
                                       CreatedAt = user.CreatedAt,
                                       Name = user.Name,
                                       Application = role.Application,
-                                      Description = role.Description
                                   }).ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().Count();
                 }
 

@@ -9,7 +9,6 @@ namespace UserService.Models.ResponseModel
     {
         public string RoleId { get; set; }
         public string Application { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Privilege { get; set; }
     }
 }
