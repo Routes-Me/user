@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -125,7 +126,7 @@ namespace UserService.Repository
             }
         }
 
-        public async Task<dynamic> VerifySigninOTP(VerifyOTPModel model)
+        public async Task<dynamic> VerifySigninOTP(VerifyOTPModel model, StringValues Application)
         {
             try
             {
@@ -161,7 +162,7 @@ namespace UserService.Repository
                 if (result.statusCode != StatusCodes.Status200OK)
                     return ReturnResponse.ErrorResponse(result.message, result.statusCode);
 
-                string Token = _helper.GenerateToken(tokenGenerator);
+                string Token = _helper.GenerateToken(tokenGenerator, Application);
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;
                 response.token = Token;
@@ -222,7 +223,7 @@ namespace UserService.Repository
             }
         }
 
-        public async Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model)
+        public async Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model, StringValues Application)
         {
             try
             {
@@ -258,7 +259,7 @@ namespace UserService.Repository
                 if (result.statusCode != StatusCodes.Status200OK)
                     return ReturnResponse.ErrorResponse(result.message, result.statusCode);
 
-                string token = _helper.GenerateToken(tokenGenerator);
+                string token = _helper.GenerateToken(tokenGenerator, Application);
                 LoginUser loginUser = new LoginUser()
                 {
                     UserId = Convert.ToString(phone.User.UserId),

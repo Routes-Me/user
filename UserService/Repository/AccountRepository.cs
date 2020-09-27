@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using RestSharp;
 using System;
@@ -153,7 +154,7 @@ namespace UserService.Repository
             }
         }
 
-        public async Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model)
+        public async Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model, StringValues Application)
         {
             SignInResponse response = new SignInResponse();
             ErrorResponse errorResponse = new ErrorResponse();
@@ -242,7 +243,7 @@ namespace UserService.Repository
                     Email = user.Email,
                     RoleName = usersRole.Privilege
                 };
-                string Token = _helper.GenerateToken(tokenGenerator);
+                string Token = _helper.GenerateToken(tokenGenerator, Application);
 
                 user.LastLoginDate = DateTime.Now;
                 _context.Users.Update(user);
@@ -340,7 +341,7 @@ namespace UserService.Repository
             }
         }
 
-        public async Task<dynamic> QRSignin(SigninModel model)
+        public async Task<dynamic> QRSignin(SigninModel model, StringValues Application)
         {
             QrSignInResponse response = new QrSignInResponse();
             string originalPassword = string.Empty;
@@ -398,7 +399,7 @@ namespace UserService.Repository
                     Email = user.Email,
                     RoleName = usersRole.Privilege
                 };
-                string token = _helper.GenerateToken(tokenGenerator);
+                string token = _helper.GenerateToken(tokenGenerator, Application);
                 _context.Users.Update(user);
                 _context.SaveChanges();
                 LoginUser loginUser = new LoginUser()

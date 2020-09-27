@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Primitives;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace UserService.Helper.Abstraction
 {
     public interface IHelperRepository
     {
-        string GenerateToken(TokenGenerator user);
+        string GenerateToken(TokenGenerator user, StringValues Application);
         Task<SendGrid.Response> SendConfirmationEmail(int userId, string email, string siteUrl);
         Task<SendGrid.Response> VerifyEmail(string email, string password);
     }

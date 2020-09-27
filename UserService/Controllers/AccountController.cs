@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.ResponseModel;
@@ -37,7 +38,9 @@ namespace UserService.Controllers
         [Route("signin")]
         public async Task<IActionResult> Signin(SigninModel model)
         {
-            dynamic response = await _accountRepository.SignIn(model);
+            StringValues Application;
+            Request.Headers.TryGetValue("Application", out Application);
+            dynamic response = await _accountRepository.SignIn(model, Application.FirstOrDefault());
             if (response.Item1 != null)
                 return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1.errors);
             return StatusCode((int)response.Item2.statusCode, response.Item2);
@@ -47,7 +50,9 @@ namespace UserService.Controllers
         [Route("qr/signin")]
         public async Task<IActionResult> QRSignin(SigninModel model)
         {
-            dynamic response = await _accountRepository.QRSignin(model);
+            StringValues Application;
+            Request.Headers.TryGetValue("Application", out Application);
+            dynamic response = await _accountRepository.QRSignin(model, Application);
             return StatusCode((int)response.statusCode, response);
         }
 

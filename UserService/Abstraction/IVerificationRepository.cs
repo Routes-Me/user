@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Primitives;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,11 +19,11 @@ namespace UserService.Abstraction
 
         Task<dynamic> VerifyOTPForQRCode(VerifyOTPModel model);
 
-        Task<dynamic> VerifySigninOTP(VerifyOTPModel model);
+        Task<dynamic> VerifySigninOTP(VerifyOTPModel model, StringValues Application);
 
         Task<dynamic> SendEmailConfirmation(EmailModel model);
 
         dynamic VerifyEmailConfirmation(string id);
-        Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model);
+        Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model, StringValues Application);
     }
 }

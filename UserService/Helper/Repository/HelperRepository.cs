@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using SendGrid;
 using SendGrid.Helpers.Mail;
@@ -26,7 +27,7 @@ namespace UserService.Helper.Repository
             _appSettings = appSettings.Value;
             _sendGridSettings = sendGridSettings.Value;
         }
-        public string GenerateToken(TokenGenerator Model)
+        public string GenerateToken(TokenGenerator Model, StringValues Application)
         {
             try
             {
@@ -41,14 +42,30 @@ namespace UserService.Helper.Repository
                 new Claim(ClaimTypes.UserData, Model.UserId.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, Model.UserId.ToString()),
                 };
-                var tokenString = new JwtSecurityToken(
-                issuer: _appSettings.ValidIssuer,
-                audience: _appSettings.ValidAudience,
-                expires: DateTime.UtcNow.AddDays(7),
-                claims: claimsData,
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                );
-                var token = new JwtSecurityTokenHandler().WriteToken(tokenString);
+
+                string token = string.Empty;
+                if (Application.Count > 0 && Application.ToString().ToLower() == "screen")
+                {
+                    var tokenString = new JwtSecurityToken(
+                                        issuer: _appSettings.ValidIssuer,
+                                        audience: _appSettings.ValidAudience,
+                                        expires: DateTime.UtcNow.AddYears(100),
+                                        claims: claimsData,
+                                        signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                                        );
+                    token = new JwtSecurityTokenHandler().WriteToken(tokenString);
+                }
+                else
+                {
+                    var tokenString = new JwtSecurityToken(
+                                       issuer: _appSettings.ValidIssuer,
+                                       audience: _appSettings.ValidAudience,
+                                       expires: DateTime.UtcNow.AddMinutes(60),
+                                       claims: claimsData,
+                                       signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                                       );
+                    token = new JwtSecurityTokenHandler().WriteToken(tokenString);
+                }
                 return token;
             }
             catch (Exception ex)

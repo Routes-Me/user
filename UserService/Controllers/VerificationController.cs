@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.Common;
@@ -58,7 +59,9 @@ namespace UserService.Controllers
         [Route("signin/otp/verify")]
         public async Task<IActionResult> VerifySigninOTP(VerifyOTPModel model)
         {
-            dynamic response = await _verificationRepository.VerifySigninOTP(model);
+            StringValues Application;
+            Request.Headers.TryGetValue("Application", out Application);
+            dynamic response = await _verificationRepository.VerifySigninOTP(model, Application);
             return StatusCode((int)response.statusCode, response);
         }
 
@@ -66,7 +69,9 @@ namespace UserService.Controllers
         [Route("qr/signin/otp/verify")]
         public async Task<IActionResult> QRVerifySigninOTP(VerifyOTPModel model)
         {
-            dynamic response = await _verificationRepository.QRVerifySigninOTP(model);
+            StringValues Application;
+            Request.Headers.TryGetValue("Application", out Application);
+            dynamic response = await _verificationRepository.QRVerifySigninOTP(model, Application);
             return StatusCode((int)response.statusCode, response);
         }
 
