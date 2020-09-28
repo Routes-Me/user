@@ -23,8 +23,8 @@ namespace UserService.Models
         {
             Response response = new Response();
             response.status = false;
-            response.message = CommonMessage.ExceptionMessage + ex.Message;
-            response.statusCode = StatusCodes.Status500InternalServerError;
+            response.message = CommonMessage.GenericException;
+            response.statusCode = StatusCodes.Status401Unauthorized;
             return response;
         }
 

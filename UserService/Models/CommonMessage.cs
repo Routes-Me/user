@@ -20,7 +20,7 @@ namespace UserService.Models
         public static string InvalidPasswordFormat = "Incorrect encrypted password string format.";
         public static string IncorrectUserRole = "Incorrect user role.";
         public static string LoginSuccess = "Login successfully.";
-        public static string GenericException = "Something went wrong while login. Error Message - ";
+        public static string GenericException = "You are not authorized to access this content.";
         public static string PhoneNotExist = "Phone number does not exist in the system.";
         public static string PhoneRequired = "Phone number is required.";
         public static string OtpRequired = "Otp code is required.";

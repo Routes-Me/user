@@ -256,9 +256,9 @@ namespace UserService.Repository
             }
             catch (Exception ex)
             {
-                errorDetails.statusCode = 500;
+                errorDetails.statusCode = 401;
                 errorDetails.code = 3;
-                errorDetails.detail = CommonMessage.GenericException + ex.Message;
+                errorDetails.detail = CommonMessage.GenericException;
                 errorResponse.errors.Add(errorDetails);
                 return (errorResponse, null);
             }
