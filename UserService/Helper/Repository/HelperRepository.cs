@@ -49,7 +49,7 @@ namespace UserService.Helper.Repository
                     var tokenString = new JwtSecurityToken(
                                         issuer: _appSettings.ValidIssuer,
                                         audience: _appSettings.ValidAudience,
-                                        expires: DateTime.UtcNow.AddYears(100),
+                                        expires: DateTime.UtcNow.AddMonths(6),
                                         claims: claimsData,
                                         signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                                         );
