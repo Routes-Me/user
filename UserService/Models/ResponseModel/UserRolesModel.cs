@@ -11,4 +11,10 @@ namespace UserService.Models.ResponseModel
         public string Application { get; set; }
         public string Privilege { get; set; }
     }
+
+    public class UserRoleForToken
+    {
+        public string Application { get; set; }
+        public string Privilege { get; set; }
+    }
 }

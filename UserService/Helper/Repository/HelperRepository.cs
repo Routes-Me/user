@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using UserService.Helper.Abstraction;
 using UserService.Models.Common;
@@ -37,12 +38,14 @@ namespace UserService.Helper.Repository
                 var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
                 var claimsData = new Claim[]
                 {
-                new Claim(ClaimTypes.Email, Model.Email.ToString()),
-                new Claim(ClaimTypes.Role, Model.RoleName.ToString()),
-                new Claim(ClaimTypes.UserData, Model.UserId.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, Model.UserId.ToString()),
+                    new Claim("UserId", Model.UserId.ToString()),
+                    new Claim("Name", Model.Name.ToString()),
+                    new Claim("Email", Model.Email.ToString()),
+                    new Claim("PhoneNumber", Model.PhoneNumber.ToString()),
+                    new Claim("Password", Model.Password.ToString()),
+                    new Claim("Roles", JsonSerializer.Serialize(Model.Roles)),
+                    new Claim("InstitutionId", Model.InstitutionId.ToString())
                 };
-
                 string token = string.Empty;
                 if (Application.Count > 0 && Application.ToString().ToLower() == "screen")
                 {

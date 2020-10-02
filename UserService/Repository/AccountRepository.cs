@@ -218,17 +218,16 @@ namespace UserService.Repository
                     }
                 }
 
-                var usersRole = (from usersrole in _context.UsersRoles
+                var usersRoles = (from usersrole in _context.UsersRoles
                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
                                  where usersrole.UserId == user.UserId
-                                 select new Roles
+                                 select new UserRoleForToken
                                  {
-                                     RoleId = role.RoleId,
                                      Application = role.Application,
                                      Privilege = role.Privilege
-                                 }).FirstOrDefault();
+                                 }).ToList();
 
-                if (usersRole == null)
+                if (usersRoles == null || usersRoles.Count == 0)
                 {
                     errorDetails.statusCode = StatusCodes.Status404NotFound;
                     errorDetails.code = 4;
@@ -237,11 +236,33 @@ namespace UserService.Repository
                     return (errorResponse, null);
                 }
 
+                string institutionIds = string.Empty;
+                try
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse driverResponse = client.Execute(request);
+                    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        var result = driverResponse.Content;
+                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
+                        institutionIds = String.Join(",", institutionData.data.Select(x=>x.InstitutionId));
+                    }
+                }
+                catch (Exception)
+                {
+                    institutionIds = string.Empty;
+                }
+
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = user.UserId,
+                    UserId = Convert.ToString(user.UserId),
+                    Name = user.Name,
                     Email = user.Email,
-                    RoleName = usersRole.Privilege
+                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
+                    Password = user.Password,
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds
                 };
                 string Token = _helper.GenerateToken(tokenGenerator, Application);
 
@@ -380,24 +401,46 @@ namespace UserService.Repository
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
                 }
 
-                var usersRole = (from usersrole in _context.UsersRoles
-                                 join role in _context.Roles on usersrole.RoleId equals role.RoleId
-                                 where usersrole.UserId == user.UserId
-                                 select new Roles
-                                 {
-                                     RoleId = role.RoleId,
-                                     Application = role.Application,
-                                     Privilege = role.Privilege
-                                 }).FirstOrDefault();
 
-                if (usersRole == null)
+                var usersRoles = (from usersrole in _context.UsersRoles
+                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                  where usersrole.UserId == user.UserId
+                                  select new UserRoleForToken
+                                  {
+                                      Application = role.Application,
+                                      Privilege = role.Privilege
+                                  }).ToList();
+
+                if (usersRoles == null || usersRoles.Count == 0)
                     return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUserRole, StatusCodes.Status404NotFound);
+
+                string institutionIds = string.Empty;
+                try
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse driverResponse = client.Execute(request);
+                    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        var result = driverResponse.Content;
+                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
+                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+                    }
+                }
+                catch (Exception)
+                {
+                    institutionIds = string.Empty;
+                }
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = user.UserId,
+                    UserId = Convert.ToString(user.UserId),
+                    Name = user.Name,
                     Email = user.Email,
-                    RoleName = usersRole.Privilege
+                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
+                    Password = user.Password,
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds
                 };
                 string token = _helper.GenerateToken(tokenGenerator, Application);
                 _context.Users.Update(user);

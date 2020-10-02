@@ -8,6 +8,8 @@ namespace UserService.Models.Common
     public class Dependencies
     {
         public string VehicleUrl { get; set; }
+
+        public string InstitutionsUrl { get; set; }
     }
 }
-    
+        

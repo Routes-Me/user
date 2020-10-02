@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
+using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,12 +27,16 @@ namespace UserService.Repository
         private readonly userserviceContext _context;
         private readonly IHelperRepository _helper;
         private readonly ITwilioVerificationRepository _twilioVerificationRepository;
+        private readonly AppSettings _appSettings;
+        private readonly Dependencies _dependencies;
 
-        public VerificationRepository(userserviceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository)
+        public VerificationRepository(userserviceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository, IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies)
         {
             _context = context;
             _helper = helper;
             _twilioVerificationRepository = twilioVerificationRepository;
+            _appSettings = appSettings.Value;
+            _dependencies = dependencies.Value;
         }
 
         public async Task<dynamic> SendOTP(SendOTPModel model)
@@ -147,22 +154,53 @@ namespace UserService.Repository
                 if (phone.User.UsersRoles == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
 
-                TokenGenerator tokenGenerator = new TokenGenerator();
-                foreach (var item in phone.User.UsersRoles)
-                {
-                    var role = _context.Roles.Where(x => x.RoleId == item.RoleId).FirstOrDefault();
-                    if (role == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
 
-                    tokenGenerator.RoleName = role.Privilege;
-                }
-                tokenGenerator.UserId = phone.User.UserId;
-                tokenGenerator.Email = phone.User.Email;
+                var usersRoles = (from usersrole in _context.UsersRoles
+                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                  where usersrole.UserId == phone.User.UserId
+                                  select new UserRoleForToken
+                                  {
+                                      Application = role.Application,
+                                      Privilege = role.Privilege
+                                  }).ToList();
+
+                if (usersRoles == null || usersRoles.Count == 0)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
+
                 var result = await VerifyOTP(model);
                 if (result.statusCode != StatusCodes.Status200OK)
                     return ReturnResponse.ErrorResponse(result.message, result.statusCode);
 
+                string institutionIds = string.Empty;
+                try
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(phone.User.UserId));
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse driverResponse = client.Execute(request);
+                    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        var driverResult = driverResponse.Content;
+                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(driverResult);
+                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+                    }
+                }
+                catch (Exception)
+                {
+                    institutionIds = string.Empty;
+                }
+
+                TokenGenerator tokenGenerator = new TokenGenerator()
+                {
+                    UserId = Convert.ToString(phone.User.UserId),
+                    Name = phone.User.Name,
+                    Email = phone.User.Email,
+                    PhoneNumber = phone.Number,
+                    Password = phone.User.Password,
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds
+                };
                 string Token = _helper.GenerateToken(tokenGenerator, Application);
+
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;
                 response.token = Token;
@@ -244,29 +282,58 @@ namespace UserService.Repository
                 if (phone.User.UsersRoles == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
 
-                TokenGenerator tokenGenerator = new TokenGenerator();
-                foreach (var item in phone.User.UsersRoles)
-                {
-                    var role = _context.Roles.Where(x => x.RoleId == item.RoleId).FirstOrDefault();
-                    if (role == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
+                var usersRoles = (from usersrole in _context.UsersRoles
+                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                  where usersrole.UserId == phone.User.UserId
+                                  select new UserRoleForToken
+                                  {
+                                      Application = role.Application,
+                                      Privilege = role.Privilege
+                                  }).ToList();
 
-                    tokenGenerator.RoleName = role.Privilege;
-                }
-                tokenGenerator.UserId = phone.User.UserId;
-                tokenGenerator.Email = phone.User.Email;
+                if (usersRoles == null || usersRoles.Count == 0)
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
+
                 var result = await VerifyOTP(model);
                 if (result.statusCode != StatusCodes.Status200OK)
                     return ReturnResponse.ErrorResponse(result.message, result.statusCode);
 
-                string token = _helper.GenerateToken(tokenGenerator, Application);
+                string institutionIds = string.Empty;
+                try
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(phone.User.UserId));
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse driverResponse = client.Execute(request);
+                    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        var driverResult = driverResponse.Content;
+                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(driverResult);
+                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+                    }
+                }
+                catch (Exception)
+                {
+                    institutionIds = string.Empty;
+                }
+
+                TokenGenerator tokenGenerator = new TokenGenerator()
+                {
+                    UserId = Convert.ToString(phone.User.UserId),
+                    Name = phone.User.Name,
+                    Email = phone.User.Email,
+                    PhoneNumber = phone.Number,
+                    Password = phone.User.Password,
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds
+                };
+                string Token = _helper.GenerateToken(tokenGenerator, Application);
                 LoginUser loginUser = new LoginUser()
                 {
                     UserId = Convert.ToString(phone.User.UserId),
                     Name = phone.User.Name,
                     Email = phone.User.Email,
                     Phone = phone.Number,
-                    Token = token,
+                    Token = Token,
                 };
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;

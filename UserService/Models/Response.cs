@@ -107,4 +107,14 @@ namespace UserService.Models
         public string UserId { get; set; }
         public string InstitutionId { get; set; }
     }
+
+    public class InstitutionResponse : Response
+    {
+        public List<InstitutionModel> data { get; set; }
+    }
+
+    public class InstitutionModel
+    {
+        public string InstitutionId { get; set; }
+    }
 }
