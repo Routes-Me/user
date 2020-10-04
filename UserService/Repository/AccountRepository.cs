@@ -80,7 +80,7 @@ namespace UserService.Repository
 
                 if (!string.IsNullOrEmpty(model.Password))
                 {
-                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await PasswordDecryptionAsync(model.Password);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
                 }
@@ -107,7 +107,7 @@ namespace UserService.Repository
                     _context.Phones.Add(phone);
                     _context.SaveChanges();
                 }
-                
+
                 foreach (var role in roles)
                 {
                     UsersRoles usersroles = new UsersRoles()
@@ -118,7 +118,7 @@ namespace UserService.Repository
                     _context.UsersRoles.Add(usersroles);
                 }
                 _context.SaveChanges();
-                
+
                 if (Convert.ToInt32(model.InstitutionId) != 0)
                 {
                     DriversModel driver = new DriversModel()
@@ -187,9 +187,12 @@ namespace UserService.Repository
                         return (errorResponse, null);
                     }
 
-                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    if (!string.IsNullOrEmpty(model.Password))
+                    {
+                        originalPassword = await PasswordDecryptionAsync(model.Password);
+                        if (originalPassword == "Unauthorized Access")
+                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    }
 
                     var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
                     if (!isVerified)
@@ -203,9 +206,12 @@ namespace UserService.Repository
                 }
                 else
                 {
-                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    if (!string.IsNullOrEmpty(model.Password))
+                    {
+                        originalPassword = await PasswordDecryptionAsync(model.Password);
+                        if (originalPassword == "Unauthorized Access")
+                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    }
 
                     var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
                     if (!isVerified)
@@ -219,13 +225,13 @@ namespace UserService.Repository
                 }
 
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                 join role in _context.Roles on usersrole.RoleId equals role.RoleId
-                                 where usersrole.UserId == user.UserId
-                                 select new UserRoleForToken
-                                 {
-                                     Application = role.Application,
-                                     Privilege = role.Privilege
-                                 }).ToList();
+                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                  where usersrole.UserId == user.UserId
+                                  select new UserRoleForToken
+                                  {
+                                      Application = role.Application,
+                                      Privilege = role.Privilege
+                                  }).ToList();
 
                 if (usersRoles == null || usersRoles.Count == 0)
                 {
@@ -246,7 +252,7 @@ namespace UserService.Repository
                     {
                         var result = driverResponse.Content;
                         var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
-                        institutionIds = String.Join(",", institutionData.data.Select(x=>x.InstitutionId));
+                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
                     }
                 }
                 catch (Exception)
@@ -306,26 +312,36 @@ namespace UserService.Repository
                     if (user == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
-                    originalPassword = await encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+
+                    if (!string.IsNullOrEmpty(model.CurrentPassword))
+                    {
+                        originalPassword = await PasswordDecryptionAsync(model.CurrentPassword);
+                        if (originalPassword == "Unauthorized Access")
+                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    }
 
                     if (!_passwordHasherRepository.Check(user.Password, originalPassword).Verified)
                         return ReturnResponse.ErrorResponse(CommonMessage.ChangePasswordFailed, StatusCodes.Status401Unauthorized);
                 }
                 else
                 {
-                    originalPassword = await encryption.DecodeAndDecrypt(model.CurrentPassword, _appSettings.IV, _appSettings.PASSWORD);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    if (!string.IsNullOrEmpty(model.CurrentPassword))
+                    {
+                        originalPassword = await PasswordDecryptionAsync(model.CurrentPassword);
+                        if (originalPassword == "Unauthorized Access")
+                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                    }
 
                     if (!_passwordHasherRepository.Check(user.Password, originalPassword).Verified)
                         return ReturnResponse.ErrorResponse(CommonMessage.ChangePasswordFailed, StatusCodes.Status401Unauthorized);
                 }
 
-                originalPassword = await encryption.DecodeAndDecrypt(model.NewPassword, _appSettings.IV, _appSettings.PASSWORD);
-                if (originalPassword == "Unauthorized Access")
-                    return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                if (!string.IsNullOrEmpty(model.NewPassword))
+                {
+                    originalPassword = await PasswordDecryptionAsync(model.NewPassword);
+                    if (originalPassword == "Unauthorized Access")
+                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                }
 
                 user.Password = _passwordHasherRepository.Hash(originalPassword);
                 _context.Users.Update(user);
@@ -381,8 +397,8 @@ namespace UserService.Repository
                     user = _context.Users.Where(x => x.UserId == phoneUser.UserId).FirstOrDefault();
                     if (user == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
-                    
-                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+
+                    originalPassword = await PasswordDecryptionAsync(model.Password);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -392,7 +408,7 @@ namespace UserService.Repository
                 }
                 else
                 {
-                    originalPassword = await encryption.DecodeAndDecrypt(model.Password, _appSettings.IV, _appSettings.PASSWORD);
+                    originalPassword = await PasswordDecryptionAsync(model.Password);
                     if (originalPassword == "Unauthorized Access")
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
 
@@ -400,7 +416,6 @@ namespace UserService.Repository
                     if (!isVerified)
                         return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
                 }
-
 
                 var usersRoles = (from usersrole in _context.UsersRoles
                                   join role in _context.Roles on usersrole.RoleId equals role.RoleId
@@ -463,6 +478,14 @@ namespace UserService.Repository
             {
                 return ReturnResponse.ExceptionResponse(ex);
             }
+        }
+
+        public async Task<string> PasswordDecryptionAsync(string Password)
+        {
+            if (encryption.IsDashboard(Password))
+                return await encryption.DecodeAndDecrypt(Password, _appSettings.IVForDashboard, _appSettings.KeyForDashboard);
+            else
+                return await encryption.DecodeAndDecrypt(Password, _appSettings.IVForAndroid, _appSettings.KeyForAndroid);
         }
     }
 }
