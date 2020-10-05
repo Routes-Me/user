@@ -243,22 +243,22 @@ namespace UserService.Repository
                 }
 
                 string institutionIds = string.Empty;
-                try
-                {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
-                    var request = new RestRequest(Method.GET);
-                    IRestResponse driverResponse = client.Execute(request);
-                    if (driverResponse.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result = driverResponse.Content;
-                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
-                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
-                    }
-                }
-                catch (Exception)
-                {
-                    institutionIds = string.Empty;
-                }
+                //try
+                //{
+                //    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                //    var request = new RestRequest(Method.GET);
+                //    IRestResponse driverResponse = client.Execute(request);
+                //    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                //    {
+                //        var result = driverResponse.Content;
+                //        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
+                //        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+                //    }
+                //}
+                //catch (Exception)
+                //{
+                //    institutionIds = string.Empty;
+                //}
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
