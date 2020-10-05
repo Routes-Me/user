@@ -77,8 +77,6 @@ namespace UserService.Repository
 
                     totalCount = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(userRoleId)).ToList().Count();
                 }
-                if (userRolesModelList == null || userRolesModelList.Count == 0)
-                    return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 
                 var page = new Pagination
                 {

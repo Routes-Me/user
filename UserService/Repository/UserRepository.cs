@@ -191,9 +191,6 @@ namespace UserService.Repository
                                   }).ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().Count();
                 }
 
-                if (usersModelList == null || usersModelList.Count == 0)
-                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
-
                 var page = new Pagination
                 {
                     offset = pageInfo.offset,
