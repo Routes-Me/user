@@ -170,7 +170,7 @@ namespace UserService.Repository
                     var phoneUser = _context.Phones.Where(x => x.Number == model.Username).FirstOrDefault();
                     if (phoneUser == null)
                     {
-                        errorDetails.statusCode = StatusCodes.Status404NotFound;
+                        errorDetails.statusCode = StatusCodes.Status401Unauthorized;
                         errorDetails.code = 1;
                         errorDetails.detail = CommonMessage.IncorrectUser;
                         errorResponse.errors.Add(errorDetails);
@@ -180,7 +180,7 @@ namespace UserService.Repository
                     user = _context.Users.Where(x => x.UserId == phoneUser.UserId).FirstOrDefault();
                     if (user == null)
                     {
-                        errorDetails.statusCode = StatusCodes.Status404NotFound;
+                        errorDetails.statusCode = StatusCodes.Status401Unauthorized;
                         errorDetails.code = 1;
                         errorDetails.detail = CommonMessage.IncorrectUser;
                         errorResponse.errors.Add(errorDetails);

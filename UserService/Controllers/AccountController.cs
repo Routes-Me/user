@@ -42,7 +42,7 @@ namespace UserService.Controllers
             Request.Headers.TryGetValue("Application", out Application);
             dynamic response = await _accountRepository.SignIn(model, Application.FirstOrDefault());
             if (response.Item1 != null)
-                return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1.errors);
+                return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1);
             return StatusCode((int)response.Item2.statusCode, response.Item2);
         }
 
