@@ -482,7 +482,7 @@ namespace UserService.Repository
 
         public async Task<string> PasswordDecryptionAsync(string Password)
         {
-            if (encryption.IsDashboard(Password))
+            if (encryption.IndexOfBSign(Password) != -1)
                 return await encryption.DecodeAndDecrypt(Password, _appSettings.IVForDashboard, _appSettings.KeyForDashboard);
             else
                 return await encryption.DecodeAndDecrypt(Password, _appSettings.IVForAndroid, _appSettings.KeyForAndroid);
