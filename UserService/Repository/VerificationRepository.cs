@@ -265,7 +265,7 @@ namespace UserService.Repository
         {
             try
             {
-                QrSignInResponse response = new QrSignInResponse();
+                SignInResponse response = new SignInResponse();
                 if (string.IsNullOrEmpty(model.Phone))
                     return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
 
@@ -327,17 +327,9 @@ namespace UserService.Repository
                     InstitutionId = institutionIds
                 };
                 string Token = _helper.GenerateToken(tokenGenerator, Application);
-                LoginUser loginUser = new LoginUser()
-                {
-                    UserId = Convert.ToString(phone.User.UserId),
-                    Name = phone.User.Name,
-                    Email = phone.User.Email,
-                    Phone = phone.Number,
-                    Token = Token,
-                };
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;
-                response.user = loginUser;
+                response.token = Token;
                 response.statusCode = StatusCodes.Status200OK;
                 return response;
             }

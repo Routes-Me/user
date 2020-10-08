@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using UserService.Abstraction;
 using UserService.Helper.Abstraction;
@@ -243,22 +245,22 @@ namespace UserService.Repository
                 }
 
                 string institutionIds = string.Empty;
-                //try
-                //{
-                //    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
-                //    var request = new RestRequest(Method.GET);
-                //    IRestResponse driverResponse = client.Execute(request);
-                //    if (driverResponse.StatusCode == HttpStatusCode.OK)
-                //    {
-                //        var result = driverResponse.Content;
-                //        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
-                //        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
-                //    }
-                //}
-                //catch (Exception)
-                //{
-                //    institutionIds = string.Empty;
-                //}
+                try
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse driverResponse = client.Execute(request);
+                    if (driverResponse.StatusCode == HttpStatusCode.OK)
+                    {
+                        var result = driverResponse.Content;
+                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
+                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+                    }
+                }
+                catch (Exception)
+                {
+                    institutionIds = string.Empty;
+                }
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
@@ -380,7 +382,7 @@ namespace UserService.Repository
 
         public async Task<dynamic> QRSignin(SigninModel model, StringValues Application)
         {
-            QrSignInResponse response = new QrSignInResponse();
+            SignInResponse response = new SignInResponse();
             string originalPassword = string.Empty;
             string phoneNumber = string.Empty;
             try
@@ -460,17 +462,9 @@ namespace UserService.Repository
                 string token = _helper.GenerateToken(tokenGenerator, Application);
                 _context.Users.Update(user);
                 _context.SaveChanges();
-                LoginUser loginUser = new LoginUser()
-                {
-                    UserId = Convert.ToString(user.UserId),
-                    Name = user.Name,
-                    Email = user.Email,
-                    Phone = phoneNumber,
-                    Token = token,
-                };
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;
-                response.user = loginUser;
+                response.token = token;
                 response.statusCode = StatusCodes.Status200OK;
                 return response;
             }

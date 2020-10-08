@@ -1,12 +1,15 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Text;
@@ -36,6 +39,10 @@ namespace UserService.Helper.Repository
                     return null;
 
                 var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
+
+                string roles = JsonConvert.SerializeObject(Model.Roles);
+
+
                 var claimsData = new Claim[]
                 {
                     new Claim("UserId", Model.UserId.ToString()),
@@ -43,7 +50,7 @@ namespace UserService.Helper.Repository
                     new Claim("Email", Model.Email.ToString()),
                     new Claim("PhoneNumber", Model.PhoneNumber.ToString()),
                     new Claim("Password", Model.Password.ToString()),
-                    new Claim("Roles", JsonSerializer.Serialize(Model.Roles)),
+                    new Claim("Roles", JsonConvert.SerializeObject(Model.Roles)),
                     new Claim("InstitutionId", Model.InstitutionId.ToString())
                 };
                 string token = string.Empty;
