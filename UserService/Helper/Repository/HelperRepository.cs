@@ -39,17 +39,13 @@ namespace UserService.Helper.Repository
                     return null;
 
                 var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
-
-                string roles = JsonConvert.SerializeObject(Model.Roles);
-
-
                 var claimsData = new Claim[]
                 {
                     new Claim("UserId", Model.UserId.ToString()),
                     new Claim("Name", Model.Name.ToString()),
-                    new Claim("Email", Model.Email.ToString()),
+                    new Claim("Email", string.IsNullOrEmpty(Model.Email) ? string.Empty : Model.Email.ToString()),
                     new Claim("PhoneNumber", Model.PhoneNumber.ToString()),
-                    new Claim("Password", Model.Password.ToString()),
+                    new Claim("Password", string.IsNullOrEmpty(Model.Password)? string.Empty : Model.Password.ToString()),
                     new Claim("Roles", JsonConvert.SerializeObject(Model.Roles)),
                     new Claim("InstitutionId", Model.InstitutionId.ToString())
                 };

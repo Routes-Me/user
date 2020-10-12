@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Obfuscation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UserService.Abstraction;
 using UserService.Models;
+using UserService.Models.Common;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
 
@@ -14,8 +17,11 @@ namespace UserService.Repository
     public class UserRolesRepository : IRolesRepository
     {
         private readonly userserviceContext _context;
-        public UserRolesRepository(userserviceContext context)
+        private readonly AppSettings _appSettings;
+
+        public UserRolesRepository(IOptions<AppSettings> appSettings, userserviceContext context)
         {
+            _appSettings = appSettings.Value;
             _context = context;
         }
 
@@ -24,7 +30,8 @@ namespace UserService.Repository
             RolesResponse response = new RolesResponse();
             try
             {
-                var roles = _context.Roles.Include(x => x.UsersRoles).Where(x => x.RoleId == Convert.ToInt32(id)).FirstOrDefault();
+                var roleIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(id), _appSettings.PrimeInverse);
+                var roles = _context.Roles.Include(x => x.UsersRoles).Where(x => x.RoleId == roleIdDecrypted).FirstOrDefault();
                 if (roles == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
             
@@ -51,31 +58,32 @@ namespace UserService.Repository
             int totalCount = 0;
             try
             {
+                var roleIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(userRoleId), _appSettings.PrimeInverse);
                 List<RolesModel> userRolesModelList = new List<RolesModel>();
-                if (userRoleId == "0")
+                if (roleIdDecrypted == 0)
                 {
                     userRolesModelList = (from userRole in _context.Roles
                                           select new RolesModel()
                                           {
-                                              RoleId = userRole.RoleId.ToString(),
+                                              RoleId = ObfuscationClass.EncodeId(userRole.RoleId, _appSettings.Prime).ToString(),
                                               Application = userRole.Application,
                                               Privilege = userRole.Privilege
-                                          }).OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
+                                          }).AsEnumerable().OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.ToList().Count();
                 }
                 else
                 {
                     userRolesModelList = (from userRole in _context.Roles
-                                          where userRole.RoleId == Convert.ToInt32(userRoleId)
+                                          where userRole.RoleId == roleIdDecrypted
                                           select new RolesModel()
                                           {
-                                              RoleId = userRole.RoleId.ToString(),
+                                              RoleId = ObfuscationClass.EncodeId(userRole.RoleId, _appSettings.Prime).ToString(),
                                               Application = userRole.Application,
                                               Privilege = userRole.Privilege
-                                          }).OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
+                                          }).AsEnumerable().OrderBy(a => a.RoleId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
-                    totalCount = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(userRoleId)).ToList().Count();
+                    totalCount = _context.Roles.Where(x => x.RoleId == roleIdDecrypted).ToList().Count();
                 }
 
                 var page = new Pagination
@@ -124,10 +132,11 @@ namespace UserService.Repository
         {
             try
             {
+                var roleIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.RoleId), _appSettings.PrimeInverse);
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
-                var userRolesData = _context.Roles.Where(x => x.RoleId == Convert.ToInt32(model.RoleId)).FirstOrDefault();
+                var userRolesData = _context.Roles.Where(x => x.RoleId == roleIdDecrypted).FirstOrDefault();
                 if (userRolesData == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.RoleNotFound, StatusCodes.Status404NotFound);
 

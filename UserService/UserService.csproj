@@ -40,6 +40,9 @@
     <Reference Include="Encryption">
       <HintPath>DLL\Encryption.dll</HintPath>
     </Reference>
+    <Reference Include="Obfuscation">
+      <HintPath>DLL\Obfuscation.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

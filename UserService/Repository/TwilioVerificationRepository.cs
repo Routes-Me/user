@@ -23,7 +23,8 @@ namespace UserService.Repository
             try
             {
                 var verificationResource = await VerificationResource.CreateAsync(
-                    to: "+965" + phone,
+                    //to: "+965" + phone,
+                    to: "+91" + phone,
                     channel: "sms",
                     pathServiceSid: _config.VerificationSid
                 );
@@ -44,7 +45,8 @@ namespace UserService.Repository
             try
             {
                 var verificationCheckResource = await VerificationCheckResource.CreateAsync(
-                    to: "+965" + phone,
+                    //to: "+965" + phone,
+                    to: "+91" + phone,
                     code: code,
                     pathServiceSid: _config.VerificationSid
                 );

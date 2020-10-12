@@ -16,4 +16,5 @@ namespace UserService.Models.Common
         public List<UserRoleForToken> Roles { get; set; }
         public string InstitutionId { get; set; }
     }
+
 }

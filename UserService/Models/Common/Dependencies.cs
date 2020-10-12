@@ -10,6 +10,8 @@ namespace UserService.Models.Common
         public string VehicleUrl { get; set; }
 
         public string InstitutionsUrl { get; set; }
+        public string OfficersUrl { get; set; }
+        
     }
 }
         

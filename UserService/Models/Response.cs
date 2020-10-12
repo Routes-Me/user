@@ -82,6 +82,7 @@ namespace UserService.Models
     public class QrSignInResponse : Response
     {
         public LoginUser user { get; set; }
+        public string Token { get; set; }
     }
     #endregion
 
@@ -116,5 +117,34 @@ namespace UserService.Models
     public class InstitutionModel
     {
         public string InstitutionId { get; set; }
+    }
+
+    public class OfficersResponse : Response
+    {
+        public Pagination pagination { get; set; }
+        public List<OfficersModel> data { get; set; }
+        public OfficersIncluded included { get; set; }
+    }
+
+    public class OfficersModel
+    {
+        public string OfficerId { get; set; }
+        public string UserId { get; set; }
+        public string InstitutionId { get; set; }
+    }
+
+    public class OfficersIncluded
+    {
+        public List<UsersModel> Users { get; set; }
+        public List<Institutions> institutions { get; set; }
+    }
+
+    public class Institutions
+    {
+        public string InstitutionId { get; set; }
+        public string Name { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public string PhoneNumber { get; set; }
+        public string CountryIso { get; set; }
     }
 }

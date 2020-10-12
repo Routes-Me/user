@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Obfuscation;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,7 @@ namespace UserService.Repository
             List<int> roles = new List<int>();
             try
             {
+                int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
                 string originalPassword = string.Empty;
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
@@ -91,7 +93,7 @@ namespace UserService.Repository
                 {
                     Name = model.Name,
                     Email = model.Email,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
                     Password = string.IsNullOrEmpty(originalPassword) ? null : _passwordHasherRepository.Hash(originalPassword),
                     IsEmailVerified = false
                 };
@@ -121,12 +123,12 @@ namespace UserService.Repository
                 }
                 _context.SaveChanges();
 
-                if (Convert.ToInt32(model.InstitutionId) != 0)
+                if (institutionIdDecrypted != 0)
                 {
                     DriversModel driver = new DriversModel()
                     {
                         InstitutionId = model.InstitutionId,
-                        UserId = users.UserId.ToString()
+                        UserId = ObfuscationClass.EncodeId(users.UserId, _appSettings.Prime).ToString()
                     };
 
                     var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
@@ -147,7 +149,7 @@ namespace UserService.Repository
                 response.message = CommonMessage.UserInsert;
                 response.statusCode = StatusCodes.Status201Created;
                 response.Email = model.Email;
-                response.UserId = users.UserId.ToString();
+                response.UserId = ObfuscationClass.EncodeId(users.UserId, _appSettings.Prime).ToString();
                 return response;
             }
             catch (Exception ex)
@@ -247,7 +249,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -264,7 +266,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = Convert.ToString(user.UserId),
+                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
                     Name = user.Name,
                     Email = user.Email,
                     PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
@@ -382,7 +384,7 @@ namespace UserService.Repository
 
         public async Task<dynamic> QRSignin(SigninModel model, StringValues Application)
         {
-            SignInResponse response = new SignInResponse();
+            QrSignInResponse response = new QrSignInResponse();
             string originalPassword = string.Empty;
             string phoneNumber = string.Empty;
             try
@@ -434,7 +436,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Convert.ToString(user.UserId));
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -451,7 +453,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = Convert.ToString(user.UserId),
+                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
                     Name = user.Name,
                     Email = user.Email,
                     PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
@@ -459,12 +461,58 @@ namespace UserService.Repository
                     Roles = usersRoles,
                     InstitutionId = institutionIds
                 };
+
                 string token = _helper.GenerateToken(tokenGenerator, Application);
-                _context.Users.Update(user);
-                _context.SaveChanges();
+                bool isOfficer = false;
+                string OfficerIds = string.Empty;
+                foreach (var item in usersRoles)
+                {
+                    if (item.Privilege.ToLower() == "employee")
+                    {
+                        isOfficer = true;
+                    }
+                }
+
+                if (isOfficer == true)
+                {
+                    try
+                    {
+                        var client = new RestClient(_appSettings.Host + _dependencies.OfficersUrl + "?userId=" + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
+                        var request = new RestRequest(Method.GET);
+                        IRestResponse officerResponse = client.Execute(request);
+                        if (officerResponse.StatusCode == HttpStatusCode.OK)
+                        {
+                            var result = officerResponse.Content;
+                            var responseData = JsonConvert.DeserializeObject<OfficersResponse>(result);
+                            OfficerIds = String.Join(",", responseData.data.Select(x => x.OfficerId));
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        OfficerIds = string.Empty;
+                    }
+                }
+                LoginUser loginUser = new LoginUser()
+                {
+                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
+                    Name = user.Name,
+                    Email = user.Email,
+                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
+                    Password = user.Password,
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds,
+                    isOfficer = isOfficer,
+                    OfficerId = OfficerIds
+                };
+
+
+                //_context.Users.Update(user);
+                //_context.SaveChanges();
                 response.message = CommonMessage.LoginSuccess;
+                response.user = loginUser;
                 response.status = true;
-                response.token = token;
+                response.Token = token;
+
                 response.statusCode = StatusCodes.Status200OK;
                 return response;
             }
