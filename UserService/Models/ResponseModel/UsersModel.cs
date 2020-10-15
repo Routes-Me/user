@@ -12,7 +12,7 @@ namespace UserService.Models.ResponseModel
         public string Email { get; set; }
         public string Phone { get; set; }
         public DateTime? CreatedAt { get; set; }
-        public string Application { get; set; }
+        public List<RolesModel> Roles { get; set; }
     }
 
     public class LoginUser

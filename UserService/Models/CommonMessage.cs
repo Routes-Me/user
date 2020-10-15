@@ -54,8 +54,24 @@ namespace UserService.Models
         public static string RoleInsert = "Role inserted successfully.";
         public static string RoleUpdate = "Role updated successfully.";
         public static string ExceptionMessage = "Something went wrong. Error Message - ";
-
         public static string EmailPhoneRequired = "Email or phone is invalid";
+        public static string PrivilegeNotFound = "Privileges not found.";
+        public static string PrivilegeDelete = "Privileges deleted successfully.";
+        public static string PrivilegeRetrived = "Privileges retrived successfully.";
+        public static string PrivilegeInsert = "Privileges inserted successfully.";
+        public static string PrivilegeUpdate = "Privileges updated successfully.";
+        public static string PrivilegeExists = "Privileges already exists.";
+        public static string ApplicationNotFound = "Applications not found.";
+        public static string ApplicationDelete = "Applications deleted successfully.";
+        public static string ApplicationRetrived = "Applications retrived successfully.";
+        public static string ApplicationInsert = "Applications inserted successfully.";
+        public static string ApplicationUpdate = "Applications updated successfully.";
+        public static string ApplicationExists = " Applications already exists.";
+
+        public static string PrivilegeAssociatedWithRole = "Privileges associated with role.";
+        public static string PrivilegeAssociatedWithUserRole = "Privileges associated with user role.";
+        public static string ApplicationAssociatedWithRole = "Application associated with role.";
+        public static string ApplicationAssociatedWithUserRole = "Application associated with user role.";
 
     }
 }       

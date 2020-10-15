@@ -4,24 +4,44 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace UserService.Models.DBModels
 {
-    public partial class userserviceContext : DbContext
+    public partial class UserServiceContext : DbContext
     {
-        public userserviceContext()
+        public UserServiceContext()
         {
         }
 
-        public userserviceContext(DbContextOptions<userserviceContext> options)
+        public UserServiceContext(DbContextOptions<UserServiceContext> options)
             : base(options)
         {
         }
 
+        public virtual DbSet<Applications> Applications { get; set; }
         public virtual DbSet<Phones> Phones { get; set; }
+        public virtual DbSet<Privileges> Privileges { get; set; }
         public virtual DbSet<Roles> Roles { get; set; }
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersRoles> UsersRoles { get; set; }
 
+  
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Applications>(entity =>
+            {
+                entity.HasKey(e => e.ApplicationId)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("applications");
+
+                entity.Property(e => e.ApplicationId).HasColumnName("application_id");
+
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .HasColumnType("varchar(50)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_0900_ai_ci");
+            });
+
             modelBuilder.Entity<Phones>(entity =>
             {
                 entity.HasKey(e => e.PhoneId)
@@ -50,26 +70,47 @@ namespace UserService.Models.DBModels
                     .HasConstraintName("phones_ibfk_1");
             });
 
+            modelBuilder.Entity<Privileges>(entity =>
+            {
+                entity.HasKey(e => e.PrivilegeId)
+                    .HasName("PRIMARY");
+
+                entity.ToTable("privileges");
+
+                entity.Property(e => e.PrivilegeId).HasColumnName("privilege_id");
+
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .HasColumnType("varchar(50)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_0900_ai_ci");
+            });
+
             modelBuilder.Entity<Roles>(entity =>
             {
-                entity.HasKey(e => e.RoleId)
+                entity.HasKey(e => new { e.ApplicationId, e.PrivilegeId })
                     .HasName("PRIMARY");
 
                 entity.ToTable("roles");
 
-                entity.Property(e => e.RoleId).HasColumnName("role_id");
+                entity.HasIndex(e => e.PrivilegeId)
+                    .HasName("privilege_id");
 
-                entity.Property(e => e.Application)
-                    .HasColumnName("application")
-                    .HasColumnType("enum('screen','driver','dashboard','userapp')")
-                    .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                entity.Property(e => e.ApplicationId).HasColumnName("application_id");
 
-                entity.Property(e => e.Privilege)
-                    .HasColumnName("privilege")
-                    .HasColumnType("enum('super','chife','employee','user')")
-                    .HasCharSet("utf8mb4")
-                    .HasCollation("utf8mb4_0900_ai_ci");
+                entity.Property(e => e.PrivilegeId).HasColumnName("privilege_id");
+
+                entity.HasOne(d => d.Application)
+                    .WithMany(p => p.Roles)
+                    .HasForeignKey(d => d.ApplicationId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("roles_ibfk_2");
+
+                entity.HasOne(d => d.Privilege)
+                    .WithMany(p => p.Roles)
+                    .HasForeignKey(d => d.PrivilegeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("roles_ibfk_1");
             });
 
             modelBuilder.Entity<Users>(entity =>
@@ -112,29 +153,22 @@ namespace UserService.Models.DBModels
 
             modelBuilder.Entity<UsersRoles>(entity =>
             {
-                entity.HasKey(e => new { e.RoleId, e.UserId })
+                entity.HasKey(e => new { e.UserId, e.ApplicationId, e.PrivilegeId })
                     .HasName("PRIMARY");
 
                 entity.ToTable("users_roles");
 
-                entity.HasIndex(e => e.UserId)
-                    .HasName("user_id");
-
-                entity.Property(e => e.RoleId).HasColumnName("role_id");
-
                 entity.Property(e => e.UserId).HasColumnName("user_id");
 
-                entity.HasOne(d => d.Role)
-                    .WithMany(p => p.UsersRoles)
-                    .HasForeignKey(d => d.RoleId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("users_roles_ibfk_1");
+                entity.Property(e => e.ApplicationId).HasColumnName("application_id");
+
+                entity.Property(e => e.PrivilegeId).HasColumnName("privilege_id");
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.UsersRoles)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("users_roles_ibfk_2");
+                    .HasConstraintName("users_roles_ibfk_1");
             });
 
             OnModelCreatingPartial(modelBuilder);

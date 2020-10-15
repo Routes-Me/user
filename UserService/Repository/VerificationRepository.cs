@@ -25,13 +25,13 @@ namespace UserService.Repository
 {
     public class VerificationRepository : IVerificationRepository
     {
-        private readonly userserviceContext _context;
+        private readonly UserServiceContext _context;
         private readonly IHelperRepository _helper;
         private readonly ITwilioVerificationRepository _twilioVerificationRepository;
         private readonly AppSettings _appSettings;
         private readonly Dependencies _dependencies;
 
-        public VerificationRepository(userserviceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository, IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies)
+        public VerificationRepository(UserServiceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository, IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies)
         {
             _context = context;
             _helper = helper;
@@ -155,14 +155,13 @@ namespace UserService.Repository
                 if (phone.User.UsersRoles == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
 
-
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
-                                  where usersrole.UserId == phone.User.UserId
+                                  from roles in _context.Roles
+                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == phone.User.UserId
                                   select new UserRoleForToken
                                   {
-                                      Application = role.Application,
-                                      Privilege = role.Privilege
+                                      Application = roles.Application.Name,
+                                      Privilege = roles.Privilege.Name,
                                   }).ToList();
 
                 if (usersRoles == null || usersRoles.Count == 0)
@@ -201,7 +200,6 @@ namespace UserService.Repository
                     InstitutionId = institutionIds
                 };
                 string Token = _helper.GenerateToken(tokenGenerator, Application);
-
                 response.message = CommonMessage.LoginSuccess;
                 response.status = true;
                 response.token = Token;
@@ -286,12 +284,12 @@ namespace UserService.Repository
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
 
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
-                                  where usersrole.UserId == phone.User.UserId
+                                  from roles in _context.Roles
+                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == phone.User.UserId
                                   select new UserRoleForToken
                                   {
-                                      Application = role.Application,
-                                      Privilege = role.Privilege
+                                      Application = roles.Application.Name,
+                                      Privilege = roles.Privilege.Name,
                                   }).ToList();
 
                 if (usersRoles == null || usersRoles.Count == 0)

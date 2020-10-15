@@ -147,4 +147,16 @@ namespace UserService.Models
         public string PhoneNumber { get; set; }
         public string CountryIso { get; set; }
     }
+
+    public class PrivilegesResponse : Response
+    {
+        public Pagination pagination { get; set; }
+        public List<PrivilegesModel> data { get; set; }
+    }
+
+    public class ApplicationResponse : Response
+    {
+        public Pagination pagination { get; set; }
+        public List<ApplicationsModel> data { get; set; }
+    }
 }

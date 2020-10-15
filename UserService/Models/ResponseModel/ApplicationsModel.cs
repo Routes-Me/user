@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace UserService.Models.ResponseModel
 {
-    public class UserRoleForToken
+    public class ApplicationsModel
     {
-        public string Application { get; set; }
-        public string Privilege { get; set; }
+        public string ApplicationId { get; set; }
+        public string Name { get; set; }
     }
 }

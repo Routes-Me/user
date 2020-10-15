@@ -45,7 +45,7 @@ namespace UserService
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddDbContext<userserviceContext>(options =>
+            services.AddDbContext<UserServiceContext>(options =>
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
             });
@@ -58,6 +58,10 @@ namespace UserService
             services.AddScoped<IPasswordHasherRepository, PasswordHasherRepository>();
             services.AddScoped<IVerificationRepository, VerificationRepository>();
             services.AddScoped<IAccountRepository, AccountRepository>();
+            services.AddScoped<IPrivilegesRepository, PrivilegesRepository>();
+            services.AddScoped<IApplicationRepository, ApplicationRepository>();
+            
+
 
             services.AddSingleton<ITwilioVerificationRepository>(new TwilioVerificationRepository(
                 Configuration.GetSection("Twilio").Get<Configuration.Twilio>()));

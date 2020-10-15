@@ -24,14 +24,14 @@ namespace UserService.Repository
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly userserviceContext _context;
+        private readonly UserServiceContext _context;
         private readonly IHelperRepository _helper;
         private readonly IPasswordHasherRepository _passwordHasherRepository;
         private readonly AppSettings _appSettings;
         private readonly Dependencies _dependencies;
         EncryptionClass encryption = new EncryptionClass();
 
-        public AccountRepository(IOptions<AppSettings> appSettings, userserviceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository, IOptions<Dependencies> dependencies)
+        public AccountRepository(IOptions<AppSettings> appSettings, UserServiceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository, IOptions<Dependencies> dependencies)
         {
             _appSettings = appSettings.Value;
             _context = context;
@@ -43,7 +43,8 @@ namespace UserService.Repository
         public async Task<dynamic> SignUp(RegistrationModel model)
         {
             UsersResponse response = new UsersResponse();
-            List<int> roles = new List<int>();
+            List<RolesModel> roles = new List<RolesModel>();
+
             try
             {
                 int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
@@ -56,13 +57,19 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRole = _context.Roles.Where(x => x.Application == role.Application).FirstOrDefault();
+                    var userRole = _context.Roles.Where(x => x.ApplicationId == ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse) 
+                    && x.PrivilegeId == ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)).FirstOrDefault();
                     if (userRole == null)
                     {
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
                     }
                     else
-                        roles.Add(userRole.RoleId);
+                    {
+                        RolesModel rolesModel = new RolesModel();
+                        rolesModel.ApplicationId = ObfuscationClass.EncodeId(userRole.ApplicationId, _appSettings.Prime).ToString() ;
+                        rolesModel.PrivilegeId = ObfuscationClass.EncodeId(userRole.PrivilegeId, _appSettings.Prime).ToString();
+                        roles.Add(rolesModel);
+                    }
                 }
 
                 if (string.IsNullOrEmpty(model.PhoneNumber) && string.IsNullOrEmpty(model.Email))
@@ -117,7 +124,8 @@ namespace UserService.Repository
                     UsersRoles usersroles = new UsersRoles()
                     {
                         UserId = users.UserId,
-                        RoleId = role
+                        ApplicationId = ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse) ,
+                        PrivilegeId = ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)
                     };
                     _context.UsersRoles.Add(usersroles);
                 }
@@ -229,12 +237,12 @@ namespace UserService.Repository
                 }
 
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
-                                  where usersrole.UserId == user.UserId
+                                  from roles in _context.Roles
+                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == user.UserId
                                   select new UserRoleForToken
                                   {
-                                      Application = role.Application,
-                                      Privilege = role.Privilege
+                                      Application = roles.Application.Name,
+                                      Privilege = roles.Privilege.Name,
                                   }).ToList();
 
                 if (usersRoles == null || usersRoles.Count == 0)
@@ -422,12 +430,12 @@ namespace UserService.Repository
                 }
 
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                  join role in _context.Roles on usersrole.RoleId equals role.RoleId
+                                  join role in _context.Roles on new { ApplicationId = usersrole.ApplicationId, PrivilegeId = usersrole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                   where usersrole.UserId == user.UserId
                                   select new UserRoleForToken
                                   {
-                                      Application = role.Application,
-                                      Privilege = role.Privilege
+                                      Application = role.Application.Name,
+                                      Privilege = role.Privilege.Name,
                                   }).ToList();
 
                 if (usersRoles == null || usersRoles.Count == 0)
@@ -505,9 +513,10 @@ namespace UserService.Repository
                     OfficerId = OfficerIds
                 };
 
+                user.LastLoginDate = DateTime.Now;
+                _context.Users.Update(user);
+                _context.SaveChanges();
 
-                //_context.Users.Update(user);
-                //_context.SaveChanges();
                 response.message = CommonMessage.LoginSuccess;
                 response.user = loginUser;
                 response.status = true;
