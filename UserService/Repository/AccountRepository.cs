@@ -24,14 +24,14 @@ namespace UserService.Repository
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly UserServiceContext _context;
+        private readonly userserviceContext _context;
         private readonly IHelperRepository _helper;
         private readonly IPasswordHasherRepository _passwordHasherRepository;
         private readonly AppSettings _appSettings;
         private readonly Dependencies _dependencies;
         EncryptionClass encryption = new EncryptionClass();
 
-        public AccountRepository(IOptions<AppSettings> appSettings, UserServiceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository, IOptions<Dependencies> dependencies)
+        public AccountRepository(IOptions<AppSettings> appSettings, userserviceContext context, IHelperRepository helper, IPasswordHasherRepository passwordHasherRepository, IOptions<Dependencies> dependencies)
         {
             _appSettings = appSettings.Value;
             _context = context;
@@ -236,9 +236,9 @@ namespace UserService.Repository
                     }
                 }
 
-                var usersRoles = (from usersrole in _context.UsersRoles
-                                  from roles in _context.Roles
-                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == user.UserId
+                var usersRoles = (from usersrole in _context.UsersRoles join
+                                  roles in _context.Roles on new { x = usersrole.PrivilegeId, y = usersrole.ApplicationId } equals new { x = roles.PrivilegeId, y = roles.ApplicationId }
+                                  where usersrole.UserId == user.UserId
                                   select new UserRoleForToken
                                   {
                                       Application = roles.Application.Name,

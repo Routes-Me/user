@@ -17,10 +17,10 @@ namespace UserService.Repository
 {
     public class PrivilegesRepository : IPrivilegesRepository
     {
-        private readonly UserServiceContext _context;
+        private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
 
-        public PrivilegesRepository(IOptions<AppSettings> appSettings, UserServiceContext context)
+        public PrivilegesRepository(IOptions<AppSettings> appSettings, userserviceContext context)
         {
             _appSettings = appSettings.Value;
             _context = context;

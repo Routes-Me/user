@@ -15,10 +15,10 @@ namespace UserService.Repository
 {
     public class UserRepository : IUserRepository
     {
-        private readonly UserServiceContext _context;
+        private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
 
-        public UserRepository(IOptions<AppSettings> appSettings, UserServiceContext context)
+        public UserRepository(IOptions<AppSettings> appSettings, userserviceContext context)
         {
             _appSettings = appSettings.Value;
             _context = context;
@@ -146,18 +146,8 @@ namespace UserService.Repository
                 List<UsersModel> usersModelList = new List<UsersModel>();
                 if (userIdDecrypted == 0)
                 {
-                    var roles = (from user in _context.Users
-                                 join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                 join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
-                                 select new RolesModel
-                                 {
-                                     ApplicationId = ObfuscationClass.EncodeId(role.ApplicationId, _appSettings.Prime).ToString(),
-                                     PrivilegeId = ObfuscationClass.EncodeId(role.PrivilegeId, _appSettings.Prime).ToString()
-                                 }).ToList();
 
                     usersModelList = (from user in _context.Users
-                                      join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                      join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                       join phone in _context.Phones on user.UserId equals phone.UserId
                                       select new UsersModel
                                       {
@@ -166,8 +156,30 @@ namespace UserService.Repository
                                           Email = user.Email,
                                           CreatedAt = user.CreatedAt,
                                           Name = user.Name,
-                                          Roles = roles,
+                                          Roles = null
                                       }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
+
+                    List<UsersModel> users = new List<UsersModel>();
+                    for (int i = 0; i < usersModelList.Count(); i++)
+                    {
+                        UsersModel user = new UsersModel();
+                        user.UserId = usersModelList[i].UserId;
+                        user.Phone = usersModelList[i].Phone;
+                        user.Email = usersModelList[i].Email;
+                        user.CreatedAt = usersModelList[i].CreatedAt;
+                        user.Name = usersModelList[i].Name;
+                        var usersRoles = (from userroles in _context.UsersRoles
+                                          where userroles.UserId == ObfuscationClass.DecodeId(Convert.ToInt32(usersModelList[i].UserId), _appSettings.PrimeInverse)
+                                          select new RolesModel
+                                          {
+                                              ApplicationId = ObfuscationClass.EncodeId(userroles.ApplicationId, _appSettings.Prime).ToString(),
+                                              PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
+                                          }).ToList();
+                        user.Roles = usersRoles;
+                        users.Add(user);
+                    }
+                    usersModelList = new List<UsersModel>();
+                    usersModelList = users;
 
                     totalCount = (from user in _context.Users
                                   join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
@@ -177,14 +189,14 @@ namespace UserService.Repository
                 }
                 else
                 {
+
                     var roles = (from user in _context.Users
                                  join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                 join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                  where user.UserId == userIdDecrypted
                                  select new RolesModel
                                  {
-                                     ApplicationId = ObfuscationClass.EncodeId(role.ApplicationId, _appSettings.Prime).ToString(),
-                                     PrivilegeId = ObfuscationClass.EncodeId(role.PrivilegeId, _appSettings.Prime).ToString()
+                                     ApplicationId = ObfuscationClass.EncodeId(usersRole.ApplicationId, _appSettings.Prime).ToString(),
+                                     PrivilegeId = ObfuscationClass.EncodeId(usersRole.PrivilegeId, _appSettings.Prime).ToString()
                                  }).ToList();
 
                     usersModelList = (from user in _context.Users

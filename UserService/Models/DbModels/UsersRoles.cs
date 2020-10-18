@@ -9,6 +9,7 @@ namespace UserService.Models.DBModels
         public int ApplicationId { get; set; }
         public int PrivilegeId { get; set; }
 
+        public virtual Roles Roles { get; set; }
         public virtual Users User { get; set; }
     }
 }

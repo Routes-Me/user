@@ -45,7 +45,7 @@ namespace UserService
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddDbContext<UserServiceContext>(options =>
+            services.AddDbContext<userserviceContext>(options =>
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
             });

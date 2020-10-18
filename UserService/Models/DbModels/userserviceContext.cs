@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace UserService.Models.DBModels
 {
-    public partial class UserServiceContext : DbContext
+    public partial class userserviceContext : DbContext
     {
-        public UserServiceContext()
+        public userserviceContext()
         {
         }
 
-        public UserServiceContext(DbContextOptions<UserServiceContext> options)
+        public userserviceContext(DbContextOptions<userserviceContext> options)
             : base(options)
         {
         }
@@ -158,6 +158,9 @@ namespace UserService.Models.DBModels
 
                 entity.ToTable("users_roles");
 
+                entity.HasIndex(e => new { e.ApplicationId, e.PrivilegeId })
+                    .HasName("application_id");
+
                 entity.Property(e => e.UserId).HasColumnName("user_id");
 
                 entity.Property(e => e.ApplicationId).HasColumnName("application_id");
@@ -169,6 +172,12 @@ namespace UserService.Models.DBModels
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("users_roles_ibfk_1");
+
+                entity.HasOne(d => d.Roles)
+                    .WithMany(p => p.UsersRoles)
+                    .HasForeignKey(d => new { d.ApplicationId, d.PrivilegeId })
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("users_roles_ibfk_2");
             });
 
             OnModelCreatingPartial(modelBuilder);

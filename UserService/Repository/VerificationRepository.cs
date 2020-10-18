@@ -25,13 +25,13 @@ namespace UserService.Repository
 {
     public class VerificationRepository : IVerificationRepository
     {
-        private readonly UserServiceContext _context;
+        private readonly userserviceContext _context;
         private readonly IHelperRepository _helper;
         private readonly ITwilioVerificationRepository _twilioVerificationRepository;
         private readonly AppSettings _appSettings;
         private readonly Dependencies _dependencies;
 
-        public VerificationRepository(UserServiceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository, IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies)
+        public VerificationRepository(userserviceContext context, IHelperRepository helper, ITwilioVerificationRepository twilioVerificationRepository, IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies)
         {
             _context = context;
             _helper = helper;

@@ -16,10 +16,10 @@ namespace UserService.Repository
 {
     public class ApplicationRepository : IApplicationRepository
     {
-        private readonly UserServiceContext _context;
+        private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
 
-        public ApplicationRepository(IOptions<AppSettings> appSettings, UserServiceContext context)
+        public ApplicationRepository(IOptions<AppSettings> appSettings, userserviceContext context)
         {
             _appSettings = appSettings.Value;
             _context = context;
