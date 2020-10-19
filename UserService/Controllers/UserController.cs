@@ -19,9 +19,9 @@ namespace UserService.Controllers
 
         [HttpGet]
         [Route("users/{id=0}")]
-        public IActionResult Get(string id, [FromQuery] Pagination pageInfo)
+        public IActionResult Get(string id, string Include, [FromQuery] Pagination pageInfo)
         {
-            dynamic response = _usersRepository.GetUser(id, pageInfo);
+            dynamic response = _usersRepository.GetUser(id, pageInfo, Include);
             return StatusCode((int)response.statusCode, response);
         }
 

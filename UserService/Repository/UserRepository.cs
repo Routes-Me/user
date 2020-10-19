@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Obfuscation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UserService.Abstraction;
+using UserService.Helper.Abstraction;
 using UserService.Models;
 using UserService.Models.Common;
 using UserService.Models.DBModels;
@@ -17,11 +19,13 @@ namespace UserService.Repository
     {
         private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
+        private readonly IUserIncludedRepository _userIncludedRepository;
 
-        public UserRepository(IOptions<AppSettings> appSettings, userserviceContext context)
+        public UserRepository(IOptions<AppSettings> appSettings, userserviceContext context, IUserIncludedRepository userIncludedRepository)
         {
             _appSettings = appSettings.Value;
             _context = context;
+            _userIncludedRepository = userIncludedRepository;
         }
 
         public dynamic DeleteUser(string id)
@@ -136,7 +140,7 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic GetUser(string userId, Pagination pageInfo)
+        public dynamic GetUser(string userId, Pagination pageInfo, string includeType)
         {
             try
             {
@@ -146,7 +150,6 @@ namespace UserService.Repository
                 List<UsersModel> usersModelList = new List<UsersModel>();
                 if (userIdDecrypted == 0)
                 {
-
                     usersModelList = (from user in _context.Users
                                       join phone in _context.Phones on user.UserId equals phone.UserId
                                       select new UsersModel
@@ -189,7 +192,6 @@ namespace UserService.Repository
                 }
                 else
                 {
-
                     var roles = (from user in _context.Users
                                  join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
                                  where user.UserId == userIdDecrypted
@@ -229,11 +231,33 @@ namespace UserService.Repository
                     total = totalCount
                 };
 
+                dynamic includeData = new JObject();
+                if (!string.IsNullOrEmpty(includeType))
+                {
+                    string[] includeArr = includeType.Split(',');
+                    if (includeArr.Length > 0)
+                    {
+                        foreach (var item in includeArr)
+                        {
+                            if (item.ToLower() == "application" || item.ToLower() == "applications")
+                                includeData.applications = _userIncludedRepository.GetApplicationIncludedData(usersModelList);
+
+                            else if (item.ToLower() == "privilege" || item.ToLower() == "privileges")
+                                includeData.privileges = _userIncludedRepository.GetPrivilegeIncludedData(usersModelList);
+                        }
+                    }
+                }
+
+                if (((JContainer)includeData).Count == 0)
+                    includeData = null;
+
                 response.message = CommonMessage.UserRetrived;
+                response.statusCode = StatusCodes.Status200OK;
                 response.status = true;
                 response.pagination = page;
                 response.data = usersModelList;
-                response.statusCode = StatusCodes.Status200OK;
+                response.included = includeData;
+           
                 return response;
             }
             catch (Exception ex)

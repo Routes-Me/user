@@ -60,9 +60,7 @@ namespace UserService
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IPrivilegesRepository, PrivilegesRepository>();
             services.AddScoped<IApplicationRepository, ApplicationRepository>();
-            
-
-
+            services.AddScoped<IUserIncludedRepository, UserIncludedRepository>();
             services.AddSingleton<ITwilioVerificationRepository>(new TwilioVerificationRepository(
                 Configuration.GetSection("Twilio").Get<Configuration.Twilio>()));
             // configure strongly typed settings objects
@@ -78,55 +76,55 @@ namespace UserService
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer("clientSecretKey",x =>
-            {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidAudience = appSettings.ValidAudience,
-                    ValidIssuer = appSettings.ValidIssuer,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Secret)),
+            }).AddJwtBearer("clientSecretKey", x =>
+             {
+                 x.RequireHttpsMetadata = false;
+                 x.SaveToken = true;
+                 x.TokenValidationParameters = new TokenValidationParameters
+                 {
+                     ValidateIssuer = true,
+                     ValidateAudience = true,
+                     ValidAudience = appSettings.ValidAudience,
+                     ValidIssuer = appSettings.ValidIssuer,
+                     ValidateIssuerSigningKey = true,
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Secret)),
                     // verify signature to avoid tampering
                     ValidateLifetime = true, // validate the expiration
                     RequireExpirationTime = true,
-                    ClockSkew = TimeSpan.FromMinutes(5) // tolerance for the expiration date
+                     ClockSkew = TimeSpan.FromMinutes(5) // tolerance for the expiration date
                 };
-                x.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
-                        logger.LogError("Authentication failed.", context.Exception);
-                        context.Response.StatusCode = 401;
-                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                        {
-                            context.Response.Headers.Add("Token-Expired", "true");
-                        }
-                        context.Response.OnStarting(async () =>
-                        {
-                            context.Response.ContentType = "application/json";
-                            ErrorMessage errorMessage = new ErrorMessage();
-                            errorMessage.Message = "Authentication failed.";
-                            await context.Response.WriteAsync(JsonConvert.SerializeObject(errorMessage));
-                        });
-                        return Task.CompletedTask;
-                    },
-                    OnMessageReceived = context =>
-                    {
-                        return Task.CompletedTask;
-                    },
-                    OnChallenge = context =>
-                    {
-                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
-                        logger.LogError("OnChallenge error", context.Error, context.ErrorDescription);
-                        return Task.CompletedTask;
-                    }
-                };
-            });
+                 x.Events = new JwtBearerEvents
+                 {
+                     OnAuthenticationFailed = context =>
+                     {
+                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
+                         logger.LogError("Authentication failed.", context.Exception);
+                         context.Response.StatusCode = 401;
+                         if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                         {
+                             context.Response.Headers.Add("Token-Expired", "true");
+                         }
+                         context.Response.OnStarting(async () =>
+                         {
+                             context.Response.ContentType = "application/json";
+                             ErrorMessage errorMessage = new ErrorMessage();
+                             errorMessage.Message = "Authentication failed.";
+                             await context.Response.WriteAsync(JsonConvert.SerializeObject(errorMessage));
+                         });
+                         return Task.CompletedTask;
+                     },
+                     OnMessageReceived = context =>
+                     {
+                         return Task.CompletedTask;
+                     },
+                     OnChallenge = context =>
+                     {
+                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(JwtBearerEvents));
+                         logger.LogError("OnChallenge error", context.Error, context.ErrorDescription);
+                         return Task.CompletedTask;
+                     }
+                 };
+             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -97,6 +97,8 @@ namespace UserService.Models
     {
         public Pagination pagination { get; set; }
         public List<UsersModel> data { get; set; }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public JObject included { get; set; }
     }
 
     #endregion
