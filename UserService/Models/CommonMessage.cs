@@ -39,7 +39,7 @@ namespace UserService.Models
         public static string ChangePasswordSuccess = "Password updated successfully.";
         public static string EmailNotFound = "Email does not exist in the system";
         public static string ForgotPasswordFailed = "Something went wrong while sending password to your email. Please contact to the support team.";
-        public static string ForgotPasswordSuccess = "Password sent to your email. Please Check your inbox.";
+        public static string ForgotPasswordSuccess = "Password has been sent to the given email address. Please check your inbox.";
         public static string OtpSendFailed = "Something went wrong while sending otp to your phone";
         public static string OtpSendSuccess = "6 digit code has been sent successfully.";
         public static string OtpVerifiedSuccess = "Phone verified successfully.";

@@ -65,15 +65,15 @@ namespace UserService.Controllers
             return StatusCode((int)response.statusCode, response);
         }
 
-        [HttpPost]
-        [Route("qr/signin/otp/verify")]
-        public async Task<IActionResult> QRVerifySigninOTP(VerifyOTPModel model)
-        {
-            StringValues Application;
-            Request.Headers.TryGetValue("Application", out Application);
-            dynamic response = await _verificationRepository.QRVerifySigninOTP(model, Application);
-            return StatusCode((int)response.statusCode, response);
-        }
+        //[HttpPost]
+        //[Route("qr/signin/otp/verify")]
+        //public async Task<IActionResult> QRVerifySigninOTP(VerifyOTPModel model)
+        //{
+        //    StringValues Application;
+        //    Request.Headers.TryGetValue("Application", out Application);
+        //    dynamic response = await _verificationRepository.QRVerifySigninOTP(model, Application);
+        //    return StatusCode((int)response.statusCode, response);
+        //}
 
         [HttpPost]
         [Route("email")]

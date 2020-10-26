@@ -46,16 +46,6 @@ namespace UserService.Controllers
             return StatusCode((int)response.Item2.statusCode, response.Item2);
         }
 
-        [HttpPost]
-        [Route("qr/signin")]
-        public async Task<IActionResult> QRSignin(SigninModel model)
-        {
-            StringValues Application;
-            Request.Headers.TryGetValue("Application", out Application);
-            dynamic response = await _accountRepository.QRSignin(model, Application);
-            return StatusCode((int)response.statusCode, response);
-        }
-
         [HttpPut]
         [Route("account/password")]
         public async Task<IActionResult> ChangePassword(ChangePasswordModel model)

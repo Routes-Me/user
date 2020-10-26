@@ -44,7 +44,6 @@ namespace UserService.Repository
         {
             UsersResponse response = new UsersResponse();
             List<RolesModel> roles = new List<RolesModel>();
-
             try
             {
                 int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
@@ -57,7 +56,7 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRole = _context.Roles.Where(x => x.ApplicationId == ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse) 
+                    var userRole = _context.Roles.Where(x => x.ApplicationId == ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse)
                     && x.PrivilegeId == ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)).FirstOrDefault();
                     if (userRole == null)
                     {
@@ -66,7 +65,7 @@ namespace UserService.Repository
                     else
                     {
                         RolesModel rolesModel = new RolesModel();
-                        rolesModel.ApplicationId = ObfuscationClass.EncodeId(userRole.ApplicationId, _appSettings.Prime).ToString() ;
+                        rolesModel.ApplicationId = ObfuscationClass.EncodeId(userRole.ApplicationId, _appSettings.Prime).ToString();
                         rolesModel.PrivilegeId = ObfuscationClass.EncodeId(userRole.PrivilegeId, _appSettings.Prime).ToString();
                         roles.Add(rolesModel);
                     }
@@ -124,7 +123,7 @@ namespace UserService.Repository
                     UsersRoles usersroles = new UsersRoles()
                     {
                         UserId = users.UserId,
-                        ApplicationId = ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse) ,
+                        ApplicationId = ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse),
                         PrivilegeId = ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)
                     };
                     _context.UsersRoles.Add(usersroles);
@@ -236,8 +235,8 @@ namespace UserService.Repository
                     }
                 }
 
-                var usersRoles = (from usersrole in _context.UsersRoles join
-                                  roles in _context.Roles on new { x = usersrole.PrivilegeId, y = usersrole.ApplicationId } equals new { x = roles.PrivilegeId, y = roles.ApplicationId }
+                var usersRoles = (from usersrole in _context.UsersRoles
+                                  join roles in _context.Roles on new { x = usersrole.PrivilegeId, y = usersrole.ApplicationId } equals new { x = roles.PrivilegeId, y = roles.ApplicationId }
                                   where usersrole.UserId == user.UserId
                                   select new UserRoleForToken
                                   {
@@ -277,7 +276,7 @@ namespace UserService.Repository
                     UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
                     Name = user.Name,
                     Email = user.Email,
-                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
+                    PhoneNumber = _context.Phones.Where(x => x.UserId == user.UserId).Select(x => x.Number).FirstOrDefault(),
                     Password = user.Password,
                     Roles = usersRoles,
                     InstitutionId = institutionIds
@@ -383,147 +382,6 @@ namespace UserService.Repository
                     return ReturnResponse.ErrorResponse(CommonMessage.ForgotPasswordFailed, StatusCodes.Status500InternalServerError);
 
                 return ReturnResponse.SuccessResponse(CommonMessage.ForgotPasswordSuccess, false);
-            }
-            catch (Exception ex)
-            {
-                return ReturnResponse.ExceptionResponse(ex);
-            }
-        }
-
-        public async Task<dynamic> QRSignin(SigninModel model, StringValues Application)
-        {
-            QrSignInResponse response = new QrSignInResponse();
-            string originalPassword = string.Empty;
-            string phoneNumber = string.Empty;
-            try
-            {
-                Users user = new Users();
-                user = _context.Users.Where(x => x.Email == model.Username).FirstOrDefault();
-                if (user == null)
-                {
-                    var phoneUser = _context.Phones.Where(x => x.Number == model.Username).FirstOrDefault();
-                    if (phoneUser == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
-
-                    phoneNumber = phoneUser.Number;
-                    user = _context.Users.Where(x => x.UserId == phoneUser.UserId).FirstOrDefault();
-                    if (user == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUser, StatusCodes.Status400BadRequest);
-
-                    originalPassword = await PasswordDecryptionAsync(model.Password);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
-
-                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
-                    if (!isVerified)
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
-                }
-                else
-                {
-                    originalPassword = await PasswordDecryptionAsync(model.Password);
-                    if (originalPassword == "Unauthorized Access")
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
-
-                    var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
-                    if (!isVerified)
-                        return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status401Unauthorized);
-                }
-
-                var usersRoles = (from usersrole in _context.UsersRoles
-                                  join role in _context.Roles on new { ApplicationId = usersrole.ApplicationId, PrivilegeId = usersrole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
-                                  where usersrole.UserId == user.UserId
-                                  select new UserRoleForToken
-                                  {
-                                      Application = role.Application.Name,
-                                      Privilege = role.Privilege.Name,
-                                  }).ToList();
-
-                if (usersRoles == null || usersRoles.Count == 0)
-                    return ReturnResponse.ErrorResponse(CommonMessage.IncorrectUserRole, StatusCodes.Status404NotFound);
-
-                string institutionIds = string.Empty;
-                try
-                {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
-                    var request = new RestRequest(Method.GET);
-                    IRestResponse driverResponse = client.Execute(request);
-                    if (driverResponse.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result = driverResponse.Content;
-                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result);
-                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
-                    }
-                }
-                catch (Exception)
-                {
-                    institutionIds = string.Empty;
-                }
-
-                TokenGenerator tokenGenerator = new TokenGenerator()
-                {
-                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
-                    Name = user.Name,
-                    Email = user.Email,
-                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
-                    Password = user.Password,
-                    Roles = usersRoles,
-                    InstitutionId = institutionIds
-                };
-
-                string token = _helper.GenerateToken(tokenGenerator, Application);
-                bool isOfficer = false;
-                string OfficerIds = string.Empty;
-                foreach (var item in usersRoles)
-                {
-                    if (item.Privilege.ToLower() == "employee")
-                    {
-                        isOfficer = true;
-                    }
-                }
-
-                if (isOfficer == true)
-                {
-                    try
-                    {
-                        var client = new RestClient(_appSettings.Host + _dependencies.OfficersUrl + "?userId=" + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
-                        var request = new RestRequest(Method.GET);
-                        IRestResponse officerResponse = client.Execute(request);
-                        if (officerResponse.StatusCode == HttpStatusCode.OK)
-                        {
-                            var result = officerResponse.Content;
-                            var responseData = JsonConvert.DeserializeObject<OfficersResponse>(result);
-                            OfficerIds = String.Join(",", responseData.data.Select(x => x.OfficerId));
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        OfficerIds = string.Empty;
-                    }
-                }
-                LoginUser loginUser = new LoginUser()
-                {
-                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
-                    Name = user.Name,
-                    Email = user.Email,
-                    PhoneNumber = user.Phones.Count == 0 ? string.Empty : user.Phones.FirstOrDefault().Number,
-                    Password = user.Password,
-                    Roles = usersRoles,
-                    InstitutionId = institutionIds,
-                    isOfficer = isOfficer,
-                    OfficerId = OfficerIds
-                };
-
-                user.LastLoginDate = DateTime.Now;
-                _context.Users.Update(user);
-                _context.SaveChanges();
-
-                response.message = CommonMessage.LoginSuccess;
-                response.user = loginUser;
-                response.status = true;
-                response.Token = token;
-
-                response.statusCode = StatusCodes.Status200OK;
-                return response;
             }
             catch (Exception ex)
             {

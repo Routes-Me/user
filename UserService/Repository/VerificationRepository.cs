@@ -156,8 +156,8 @@ namespace UserService.Repository
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
 
                 var usersRoles = (from usersrole in _context.UsersRoles
-                                  from roles in _context.Roles
-                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == phone.User.UserId
+                                  join roles in _context.Roles on new { x = usersrole.PrivilegeId, y = usersrole.ApplicationId } equals new { x = roles.PrivilegeId, y = roles.ApplicationId }
+                                  where usersrole.UserId == phone.User.UserId
                                   select new UserRoleForToken
                                   {
                                       Application = roles.Application.Name,
@@ -255,132 +255,6 @@ namespace UserService.Repository
                 _context.Users.Update(usersData);
                 _context.SaveChanges();
                 return ReturnResponse.SuccessResponse(CommonMessage.EmailVerificationSuccess, false);
-            }
-            catch (Exception ex)
-            {
-                return ReturnResponse.ExceptionResponse(ex);
-            }
-        }
-
-        public async Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model, StringValues Application)
-        {
-            try
-            {
-                QrSignInResponse response = new QrSignInResponse();
-                if (string.IsNullOrEmpty(model.Phone))
-                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneRequired, StatusCodes.Status400BadRequest);
-
-                if (string.IsNullOrEmpty(model.Code))
-                    return ReturnResponse.ErrorResponse(CommonMessage.OtpRequired, StatusCodes.Status400BadRequest);
-
-                var phone = _context.Phones.Include(x => x.User).Include(x => x.User.UsersRoles).Where(x => x.Number == model.Phone).FirstOrDefault();
-                if (phone == null)
-                    return ReturnResponse.ErrorResponse(CommonMessage.PhoneNotExist, StatusCodes.Status404NotFound);
-
-                if (phone.User == null)
-                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotExist, StatusCodes.Status404NotFound);
-
-                if (phone.User.UsersRoles == null)
-                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
-
-                var usersRoles = (from usersrole in _context.UsersRoles
-                                  from roles in _context.Roles
-                                  where usersrole.PrivilegeId == roles.ApplicationId && usersrole.ApplicationId == roles.PrivilegeId && usersrole.UserId == phone.User.UserId
-                                  select new UserRoleForToken
-                                  {
-                                      Application = roles.Application.Name,
-                                      Privilege = roles.Privilege.Name,
-                                  }).ToList();
-
-                if (usersRoles == null || usersRoles.Count == 0)
-                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotAssociatedWithUserRole, StatusCodes.Status404NotFound);
-
-                var result = await VerifyOTP(model);
-                if (result.statusCode != StatusCodes.Status200OK)
-                    return ReturnResponse.ErrorResponse(result.message, result.statusCode);
-
-                string institutionIds = string.Empty;
-                try
-                {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString());
-                    var request = new RestRequest(Method.GET);
-                    IRestResponse driverResponse = client.Execute(request);
-                    if (driverResponse.StatusCode == HttpStatusCode.OK)
-                    {
-                        var result1 = driverResponse.Content;
-                        var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(result1);
-                        institutionIds = String.Join(",", institutionData.data.Select(x => x.InstitutionId));
-                    }
-                }
-                catch (Exception)
-                {
-                    institutionIds = string.Empty;
-                }
-
-                TokenGenerator tokenGenerator = new TokenGenerator()
-                {
-                    UserId = ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString(),
-                    Name = phone.User.Name,
-                    Email = phone.User.Email,
-                    PhoneNumber = phone.Number,
-                    Password = phone.User.Password,
-                    Roles = usersRoles,
-                    InstitutionId = institutionIds
-                };
-
-                string token = _helper.GenerateToken(tokenGenerator, Application);
-                bool isOfficer = false;
-                string OfficerIds = string.Empty;
-                foreach (var item in usersRoles)
-                {
-                    if (item.Privilege.ToLower() == "employee")
-                    {
-                        isOfficer = true;
-                    }
-                }
-
-                if (isOfficer == true)
-                {
-                    try
-                    {
-                        var client = new RestClient(_appSettings.Host + _dependencies.OfficersUrl + "?userId=" + ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString());
-                        var request = new RestRequest(Method.GET);
-                        IRestResponse officerResponse = client.Execute(request);
-                        if (officerResponse.StatusCode == HttpStatusCode.OK)
-                        {
-                            var result1 = officerResponse.Content;
-                            var responseData = JsonConvert.DeserializeObject<OfficersResponse>(result1);
-                            OfficerIds = String.Join(",", responseData.data.Select(x => x.OfficerId));
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        OfficerIds = string.Empty;
-                    }
-                }
-                LoginUser loginUser = new LoginUser()
-                {
-                    UserId = ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString(),
-                    Name = phone.User.Name,
-                    Email = phone.User.Email,
-                    PhoneNumber = phone.Number,
-                    Password = phone.User.Password,
-                    Roles = usersRoles,
-                    InstitutionId = institutionIds,
-                    isOfficer = isOfficer,
-                    OfficerId = OfficerIds
-                };
-
-
-                //_context.Users.Update(user);
-                //_context.SaveChanges();
-                response.message = CommonMessage.LoginSuccess;
-                response.user = loginUser;
-                response.status = true;
-                response.Token = token;
-
-                response.statusCode = StatusCodes.Status200OK;
-                return response;
             }
             catch (Exception ex)
             {

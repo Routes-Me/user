@@ -11,6 +11,5 @@ namespace UserService.Abstraction
         Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model, StringValues Application);
         Task<dynamic> ChangePassword(ChangePasswordModel model);
         Task<dynamic> ForgotPassword(string email);
-        Task<dynamic> QRSignin(SigninModel model, StringValues Application);
     }
 }

@@ -24,6 +24,5 @@ namespace UserService.Abstraction
         Task<dynamic> SendEmailConfirmation(EmailModel model);
 
         dynamic VerifyEmailConfirmation(string id);
-        Task<dynamic> QRVerifySigninOTP(VerifyOTPModel model, StringValues Application);
     }
 }
