@@ -17,5 +17,6 @@ namespace UserService.Models.Common
         public string KeyForDashboard { get; set; }
         public int Prime { get; set; }
         public int PrimeInverse { get; set; }
+        public string RoutesAppUrl { get; set; }
     }
 }
