@@ -191,10 +191,8 @@ namespace UserService.Repository
                     usersModelList = users;
 
                     totalCount = (from user in _context.Users
-                                  join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                  join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                   join phone in _context.Phones on user.UserId equals phone.UserId
-                                  select new UsersModel { }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().Count();
+                                  select new UsersModel { }).ToList().Count();
                 }
                 else
                 {
@@ -208,8 +206,6 @@ namespace UserService.Repository
                                  }).ToList();
 
                     usersModelList = (from user in _context.Users
-                                      join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                      join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                       join phone in _context.Phones on user.UserId equals phone.UserId
                                       where user.UserId == userIdDecrypted
                                       select new UsersModel
@@ -224,11 +220,9 @@ namespace UserService.Repository
                                       }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = (from user in _context.Users
-                                  join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                  join role in _context.Roles on new { ApplicationId = usersRole.ApplicationId, PrivilegeId = usersRole.PrivilegeId } equals new { ApplicationId = role.ApplicationId, PrivilegeId = role.PrivilegeId }
                                   join phone in _context.Phones on user.UserId equals phone.UserId
                                   where user.UserId == userIdDecrypted
-                                  select new UsersModel { }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().Count();
+                                  select new UsersModel { }).ToList().Count();
                 }
 
                 var page = new Pagination

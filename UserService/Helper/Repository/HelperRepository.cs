@@ -43,13 +43,13 @@ namespace UserService.Helper.Repository
                 var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
                 var claimsData = new Claim[]
                 {
-                    new Claim("UserId", Model.UserId.ToString()),
-                    new Claim("Name", Model.Name.ToString()),
+                    new Claim("UserId", string.IsNullOrEmpty(Model.UserId) ? string.Empty : Model.UserId.ToString()),
+                    new Claim("Name", string.IsNullOrEmpty(Model.Name) ? string.Empty : Model.Name.ToString()),
                     new Claim("Email", string.IsNullOrEmpty(Model.Email) ? string.Empty : Model.Email.ToString()),
-                    new Claim("PhoneNumber", Model.PhoneNumber.ToString()),
+                    new Claim("PhoneNumber", string.IsNullOrEmpty(Model.PhoneNumber) ? string.Empty :Model.PhoneNumber.ToString()),
                     new Claim("Password", string.IsNullOrEmpty(Model.Password)? string.Empty : Model.Password.ToString()),
                     new Claim("Roles", JsonConvert.SerializeObject(Model.Roles)),
-                    new Claim("InstitutionId", Model.InstitutionId.ToString())
+                    new Claim("InstitutionId", string.IsNullOrEmpty(Model.InstitutionId) ? string.Empty :Model.InstitutionId.ToString())
                 };
                 string token = string.Empty;
                 if (Application.Count > 0 && Application.ToString().ToLower() == "screen")
