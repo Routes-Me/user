@@ -161,4 +161,17 @@ namespace UserService.Models
         public Pagination pagination { get; set; }
         public List<ApplicationsModel> data { get; set; }
     }
+
+    public class DriverGetResponse : Response
+    {
+        public Pagination pagination { get; set; }
+        public List<DriversGetModel> data { get; set; }
+    }
+
+    public class DriversGetModel
+    {   
+        public string DriverId { get; set; }
+        public string UserId { get; set; }
+        public string InstitutionId { get; set; }
+    }
 }

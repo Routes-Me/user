@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Obfuscation;
+using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using UserService.Abstraction;
 using UserService.Helper.Abstraction;
 using UserService.Models;
@@ -20,12 +23,13 @@ namespace UserService.Repository
         private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
         private readonly IUserIncludedRepository _userIncludedRepository;
-
-        public UserRepository(IOptions<AppSettings> appSettings, userserviceContext context, IUserIncludedRepository userIncludedRepository)
+        private readonly Dependencies _dependencies;
+        public UserRepository(IOptions<AppSettings> appSettings, userserviceContext context, IUserIncludedRepository userIncludedRepository, IOptions<Dependencies> dependencies)
         {
             _appSettings = appSettings.Value;
             _context = context;
             _userIncludedRepository = userIncludedRepository;
+            _dependencies = dependencies.Value;
         }
 
         public dynamic DeleteUser(string id)
@@ -148,6 +152,7 @@ namespace UserService.Repository
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersModel> usersModelList = new List<UsersModel>();
+                var driverData = GetInstitutionIdsFromDrivers();
                 if (userIdDecrypted == 0)
                 {
                     usersModelList = (from user in _context.Users
@@ -179,6 +184,7 @@ namespace UserService.Repository
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
                         user.Roles = usersRoles;
+                        user.InstitutionId = driverData.Where(x => x.UserId == usersModelList[i].UserId).Select(x => x.InstitutionId).FirstOrDefault();
                         users.Add(user);
                     }
                     usersModelList = new List<UsersModel>();
@@ -214,6 +220,7 @@ namespace UserService.Repository
                                           CreatedAt = user.CreatedAt,
                                           Name = user.Name,
                                           Roles = roles,
+                                          InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault(),
                                       }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = (from user in _context.Users
@@ -257,12 +264,34 @@ namespace UserService.Repository
                 response.pagination = page;
                 response.data = usersModelList;
                 response.included = includeData;
-           
+
                 return response;
             }
             catch (Exception ex)
             {
                 return ReturnResponse.ExceptionResponse(ex);
+            }
+        }
+
+        public List<DriversGetModel> GetInstitutionIdsFromDrivers()
+        {
+            List<DriversGetModel> lstDrivers = new List<DriversGetModel>();
+            try
+            {
+                var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
+                var request = new RestRequest(Method.GET);
+                IRestResponse response = client.Execute(request);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var result = response.Content;
+                    var driverData = JsonConvert.DeserializeObject<DriverGetResponse>(result);
+                    lstDrivers.AddRange(driverData.data);
+                }
+                return lstDrivers;
+            }
+            catch (Exception ex)
+            {
+                return lstDrivers;
             }
         }
     }

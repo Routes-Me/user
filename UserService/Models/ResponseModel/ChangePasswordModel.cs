@@ -7,8 +7,7 @@ namespace UserService.Models.ResponseModel
 {
     public class ChangePasswordModel
     {
-        public string Username { get; set; }
-        public string CurrentPassword { get; set; }
+        public string UserId { get; set; }
         public string NewPassword { get; set; }
     }
 }

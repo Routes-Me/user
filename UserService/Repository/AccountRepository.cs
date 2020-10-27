@@ -308,45 +308,15 @@ namespace UserService.Repository
             string originalPassword = string.Empty;
             try
             {
+                int UserId = ObfuscationClass.DecodeId(Convert.ToInt32(model.UserId), _appSettings.PrimeInverse);
                 Users user = new Users();
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
 
-                user = _context.Users.Where(x => x.Email == model.Username).FirstOrDefault();
+                user = _context.Users.Where(x => x.UserId == UserId).FirstOrDefault();
                 if (user == null)
-                {
-                    var phoneUser = _context.Phones.Include(x => x.User).Where(x => x.Number == model.Username).FirstOrDefault();
-                    if (phoneUser == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
-
-                    user = phoneUser.User;
-                    if (user == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
-
-
-                    if (!string.IsNullOrEmpty(model.CurrentPassword))
-                    {
-                        originalPassword = await PasswordDecryptionAsync(model.CurrentPassword);
-                        if (originalPassword == "Unauthorized Access")
-                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
-                    }
-
-                    if (!_passwordHasherRepository.Check(user.Password, originalPassword).Verified)
-                        return ReturnResponse.ErrorResponse(CommonMessage.ChangePasswordFailed, StatusCodes.Status401Unauthorized);
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(model.CurrentPassword))
-                    {
-                        originalPassword = await PasswordDecryptionAsync(model.CurrentPassword);
-                        if (originalPassword == "Unauthorized Access")
-                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
-                    }
-
-                    if (!_passwordHasherRepository.Check(user.Password, originalPassword).Verified)
-                        return ReturnResponse.ErrorResponse(CommonMessage.ChangePasswordFailed, StatusCodes.Status401Unauthorized);
-                }
-
+                
                 if (!string.IsNullOrEmpty(model.NewPassword))
                 {
                     originalPassword = await PasswordDecryptionAsync(model.NewPassword);
@@ -377,7 +347,7 @@ namespace UserService.Repository
                 if (users == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.EmailNotFound, StatusCodes.Status404NotFound);
 
-                var res = await _helper.VerifyEmail(email, users.Password);
+                var res = await _helper.VerifyEmail(email, users);
                 if (res.StatusCode != HttpStatusCode.Accepted)
                     return ReturnResponse.ErrorResponse(CommonMessage.ForgotPasswordFailed, StatusCodes.Status500InternalServerError);
 
