@@ -66,6 +66,7 @@ namespace UserService.Repository
             try
             {
                 var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.UserId), _appSettings.PrimeInverse);
+                int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
                 List<RolesModel> roles = new List<RolesModel>();
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
@@ -136,6 +137,46 @@ namespace UserService.Repository
                 _context.Users.Update(user);
                 _context.SaveChanges();
 
+                if (institutionIdDecrypted != 0)
+                {
+                    string EncodedUserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString();
+                    var driverData = GetInstitutionIdsFromDrivers(EncodedUserId);
+
+                    if (driverData == null || driverData.Count == 0)
+                    {
+                        DriversModel driver = new DriversModel()
+                        {
+                            InstitutionId = model.InstitutionId,
+                            UserId = EncodedUserId
+                        };
+
+                        var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
+                        var request = new RestRequest(Method.POST);
+                        string jsonToSend = JsonConvert.SerializeObject(driver);
+                        request.AddParameter("application/json; charset=utf-8", jsonToSend, ParameterType.RequestBody);
+                        request.RequestFormat = DataFormat.Json;
+                        IRestResponse institutionResponse = client.Execute(request);
+                        if (institutionResponse.StatusCode != HttpStatusCode.Created) { }
+                    }
+                    else
+                    {
+                        string driverId = driverData.Where(x => x.UserId == EncodedUserId).Select(x => x.DriverId).FirstOrDefault();
+                        DriversModel driver = new DriversModel()
+                        {
+                            DriverId = driverId,
+                            InstitutionId = model.InstitutionId,
+                            UserId = EncodedUserId
+                        };
+                        var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
+                        var request = new RestRequest(Method.PUT);
+                        string jsonToSend = JsonConvert.SerializeObject(driver);
+                        request.AddParameter("application/json; charset=utf-8", jsonToSend, ParameterType.RequestBody);
+                        request.RequestFormat = DataFormat.Json;
+                        IRestResponse institutionResponse = client.Execute(request);
+                        if (institutionResponse.StatusCode != HttpStatusCode.Created) { }
+                    }
+                }
+
                 return ReturnResponse.SuccessResponse(CommonMessage.UserUpdate, false);
             }
             catch (Exception ex)
@@ -152,7 +193,7 @@ namespace UserService.Repository
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersModel> usersModelList = new List<UsersModel>();
-                var driverData = GetInstitutionIdsFromDrivers();
+                var driverData = GetInstitutionIdsFromDrivers(userId);
                 if (userIdDecrypted == 0)
                 {
                     var usersData = _context.Users.Include(x => x.Phones).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
@@ -246,23 +287,38 @@ namespace UserService.Repository
             }
         }
 
-        public List<DriversGetModel> GetInstitutionIdsFromDrivers()
+        public List<DriversGetModel> GetInstitutionIdsFromDrivers(string userId)
         {
             List<DriversGetModel> lstDrivers = new List<DriversGetModel>();
             try
             {
-                var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
-                var request = new RestRequest(Method.GET);
-                IRestResponse response = client.Execute(request);
-                if (response.StatusCode == HttpStatusCode.OK)
+                if (string.IsNullOrEmpty(userId))
                 {
-                    var result = response.Content;
-                    var driverData = JsonConvert.DeserializeObject<DriverGetResponse>(result);
-                    lstDrivers.AddRange(driverData.data);
+                    var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse response = client.Execute(request);
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var result = response.Content;
+                        var driverData = JsonConvert.DeserializeObject<DriverGetResponse>(result);
+                        lstDrivers.AddRange(driverData.data);
+                    }
+                }
+                else
+                {
+                    var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl + "?userId=" + userId);
+                    var request = new RestRequest(Method.GET);
+                    IRestResponse response = client.Execute(request);
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var result = response.Content;
+                        var driverData = JsonConvert.DeserializeObject<DriverGetResponse>(result);
+                        lstDrivers.AddRange(driverData.data);
+                    }
                 }
                 return lstDrivers;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return lstDrivers;
             }
