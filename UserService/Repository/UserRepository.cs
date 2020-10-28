@@ -155,74 +155,53 @@ namespace UserService.Repository
                 var driverData = GetInstitutionIdsFromDrivers();
                 if (userIdDecrypted == 0)
                 {
-                    usersModelList = (from user in _context.Users
-                                      join phone in _context.Phones on user.UserId equals phone.UserId
-                                      select new UsersModel
-                                      {
-                                          UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
-                                          Phone = phone.Number,
-                                          Email = user.Email,
-                                          CreatedAt = user.CreatedAt,
-                                          Name = user.Name,
-                                          Roles = null
-                                      }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
-
-                    List<UsersModel> users = new List<UsersModel>();
-                    for (int i = 0; i < usersModelList.Count(); i++)
+                    var usersData = _context.Users.Include(x => x.Phones).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
+                    foreach (var item in usersData)
                     {
-                        UsersModel user = new UsersModel();
-                        user.UserId = usersModelList[i].UserId;
-                        user.Phone = usersModelList[i].Phone;
-                        user.Email = usersModelList[i].Email;
-                        user.CreatedAt = usersModelList[i].CreatedAt;
-                        user.Name = usersModelList[i].Name;
+                        UsersModel usersModel = new UsersModel();
+                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
+                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
+                        usersModel.Email = item.Email;
+                        usersModel.CreatedAt = item.CreatedAt;
+                        usersModel.Name = item.Name;
                         var usersRoles = (from userroles in _context.UsersRoles
-                                          where userroles.UserId == ObfuscationClass.DecodeId(Convert.ToInt32(usersModelList[i].UserId), _appSettings.PrimeInverse)
+                                          where userroles.UserId == item.UserId
                                           select new RolesModel
                                           {
                                               ApplicationId = ObfuscationClass.EncodeId(userroles.ApplicationId, _appSettings.Prime).ToString(),
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
-                        user.Roles = usersRoles;
-                        user.InstitutionId = driverData.Where(x => x.UserId == usersModelList[i].UserId).Select(x => x.InstitutionId).FirstOrDefault();
-                        users.Add(user);
+                        usersModel.Roles = usersRoles;
+                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
+                        usersModelList.Add(usersModel);
                     }
-                    usersModelList = new List<UsersModel>();
-                    usersModelList = users;
-
-                    totalCount = (from user in _context.Users
-                                  join phone in _context.Phones on user.UserId equals phone.UserId
-                                  select new UsersModel { }).ToList().Count();
+                    totalCount = _context.Users.ToList().Count();
                 }
                 else
                 {
-                    var roles = (from user in _context.Users
-                                 join usersRole in _context.UsersRoles on user.UserId equals usersRole.UserId
-                                 where user.UserId == userIdDecrypted
-                                 select new RolesModel
-                                 {
-                                     ApplicationId = ObfuscationClass.EncodeId(usersRole.ApplicationId, _appSettings.Prime).ToString(),
-                                     PrivilegeId = ObfuscationClass.EncodeId(usersRole.PrivilegeId, _appSettings.Prime).ToString()
-                                 }).ToList();
+                    var usersData = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted)
+                        .AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
-                    usersModelList = (from user in _context.Users
-                                      join phone in _context.Phones on user.UserId equals phone.UserId
-                                      where user.UserId == userIdDecrypted
-                                      select new UsersModel
-                                      {
-                                          UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
-                                          Phone = phone.Number,
-                                          Email = user.Email,
-                                          CreatedAt = user.CreatedAt,
-                                          Name = user.Name,
-                                          Roles = roles,
-                                          InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault(),
-                                      }).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
-
-                    totalCount = (from user in _context.Users
-                                  join phone in _context.Phones on user.UserId equals phone.UserId
-                                  where user.UserId == userIdDecrypted
-                                  select new UsersModel { }).ToList().Count();
+                    foreach (var item in usersData)
+                    {
+                        UsersModel usersModel = new UsersModel();
+                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
+                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
+                        usersModel.Email = item.Email;
+                        usersModel.CreatedAt = item.CreatedAt;
+                        usersModel.Name = item.Name;
+                        var usersRoles = (from userroles in _context.UsersRoles
+                                          where userroles.UserId == item.UserId
+                                          select new RolesModel
+                                          {
+                                              ApplicationId = ObfuscationClass.EncodeId(userroles.ApplicationId, _appSettings.Prime).ToString(),
+                                              PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
+                                          }).ToList();
+                        usersModel.Roles = usersRoles;
+                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
+                        usersModelList.Add(usersModel);
+                    }
+                    totalCount = _context.Users.Where(x => x.UserId == userIdDecrypted).ToList().Count();
                 }
 
                 var page = new Pagination
