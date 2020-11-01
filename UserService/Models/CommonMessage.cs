@@ -20,7 +20,7 @@ namespace UserService.Models
         public static string InvalidPasswordFormat = "Incorrect encrypted password string format.";
         public static string IncorrectUserRole = "Incorrect user role.";
         public static string LoginSuccess = "Login successfully.";
-        public static string GenericException = "You are not authorized to access this content.";
+        public static string ExceptionMessage = "Something went wrong. Error Message - ";
         public static string PhoneNotExist = "Phone number does not exist in the system.";
         public static string PhoneRequired = "Phone number is required.";
         public static string OtpRequired = "Otp code is required.";
@@ -53,7 +53,6 @@ namespace UserService.Models
         public static string RoleRetrived = "Roles retrived successfully.";
         public static string RoleInsert = "Role inserted successfully.";
         public static string RoleUpdate = "Role updated successfully.";
-        public static string ExceptionMessage = "Something went wrong. Error Message - ";
         public static string EmailPhoneRequired = "Email or phone is invalid";
         public static string PrivilegeNotFound = "Privileges not found.";
         public static string PrivilegeDelete = "Privileges deleted successfully.";
