@@ -66,7 +66,6 @@ namespace UserService.Models
         public static string ApplicationInsert = "Applications inserted successfully.";
         public static string ApplicationUpdate = "Applications updated successfully.";
         public static string ApplicationExists = " Applications already exists.";
-
         public static string PrivilegeAssociatedWithRole = "Privileges associated with role.";
         public static string PrivilegeAssociatedWithUserRole = "Privileges associated with user role.";
         public static string ApplicationAssociatedWithRole = "Application associated with role.";
