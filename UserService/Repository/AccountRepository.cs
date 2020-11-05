@@ -221,7 +221,13 @@ namespace UserService.Repository
                     {
                         originalPassword = await PasswordDecryptionAsync(model.Password);
                         if (originalPassword == "Unauthorized Access")
-                            return ReturnResponse.ErrorResponse(CommonMessage.IncorrectPassword, StatusCodes.Status400BadRequest);
+                        {
+                            errorDetails.statusCode = StatusCodes.Status401Unauthorized;
+                            errorDetails.code = 1;
+                            errorDetails.detail = CommonMessage.IncorrectPassword;
+                            errorResponse.errors.Add(errorDetails);
+                            return (errorResponse, null);
+                        }
                     }
 
                     var isVerified = _passwordHasherRepository.Check(user.Password, originalPassword).Verified;
