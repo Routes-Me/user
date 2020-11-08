@@ -23,7 +23,7 @@ namespace UserService.Models
         {
             Response response = new Response();
             response.status = false;
-            response.message = CommonMessage.ExceptionMessage;
+            response.message = CommonMessage.ExceptionMessage + ex.Message;
             response.statusCode = StatusCodes.Status500InternalServerError;
             return response;
         }
