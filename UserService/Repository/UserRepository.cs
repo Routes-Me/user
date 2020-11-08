@@ -110,23 +110,26 @@ namespace UserService.Repository
                 }
                 _context.SaveChanges();
 
-                var userPhone = user.Phones.Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
-                if (userPhone == null)
+                if (!string.IsNullOrEmpty(model.PhoneNumber))
                 {
-                    Phones newPhone = new Phones()
+                    var userPhone = user.Phones.Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
+                    if (userPhone == null)
                     {
-                        IsVerified = false,
-                        Number = model.PhoneNumber,
-                        UserId = userIdDecrypted
-                    };
-                    _context.Phones.Add(newPhone);
-                }
-                else if (userPhone.Number != model.PhoneNumber)
-                {
-                    userPhone.Number = model.PhoneNumber;
-                    userPhone.IsVerified = false;
-                    _context.Phones.Update(userPhone);
-                    _context.SaveChanges();
+                        Phones newPhone = new Phones()
+                        {
+                            IsVerified = false,
+                            Number = model.PhoneNumber,
+                            UserId = userIdDecrypted
+                        };
+                        _context.Phones.Add(newPhone);
+                    }
+                    else if (userPhone.Number != model.PhoneNumber)
+                    {
+                        userPhone.Number = model.PhoneNumber;
+                        userPhone.IsVerified = false;
+                        _context.Phones.Update(userPhone);
+                        _context.SaveChanges();
+                    }
                 }
 
                 if (user.Email != model.Email)
