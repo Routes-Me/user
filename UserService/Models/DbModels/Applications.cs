@@ -12,6 +12,7 @@ namespace UserService.Models.DBModels
 
         public int ApplicationId { get; set; }
         public string Name { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         public virtual ICollection<Roles> Roles { get; set; }
     }

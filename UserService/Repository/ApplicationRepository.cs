@@ -66,6 +66,7 @@ namespace UserService.Repository
                                              {
                                                  ApplicationId = ObfuscationClass.EncodeId(application.ApplicationId, _appSettings.Prime).ToString(),
                                                  Name = application.Name,
+                                                 CreatedAt =application.CreatedAt
                                              }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.ToList().Count();
@@ -78,6 +79,7 @@ namespace UserService.Repository
                                              {
                                                  ApplicationId = ObfuscationClass.EncodeId(application.ApplicationId, _appSettings.Prime).ToString(),
                                                  Name = application.Name,
+                                                 CreatedAt = application.CreatedAt
                                              }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.Where(x => x.ApplicationId == ApplicationIdDecrypted).ToList().Count();
@@ -116,7 +118,8 @@ namespace UserService.Repository
 
                 Applications applications = new Applications()
                 {
-                    Name = model.Name
+                    Name = model.Name,
+                    CreatedAt = DateTime.Now
                 };
                 _context.Applications.Add(applications);
                 _context.SaveChanges();

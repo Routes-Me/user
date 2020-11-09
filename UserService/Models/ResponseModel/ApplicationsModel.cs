@@ -9,5 +9,6 @@ namespace UserService.Models.ResponseModel
     {
         public string ApplicationId { get; set; }
         public string Name { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

@@ -68,6 +68,7 @@ namespace UserService.Repository
                                            {
                                                PrivilegeId = ObfuscationClass.EncodeId(privilege.PrivilegeId, _appSettings.Prime).ToString(),
                                                Name = privilege.Name,
+                                               CreatedAt = privilege.CreatedAt
                                            }).AsEnumerable().OrderBy(a => a.PrivilegeId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.ToList().Count();
@@ -80,6 +81,7 @@ namespace UserService.Repository
                                            {
                                                PrivilegeId = ObfuscationClass.EncodeId(privilege.PrivilegeId, _appSettings.Prime).ToString(),
                                                Name = privilege.Name,
+                                               CreatedAt = privilege.CreatedAt
                                            }).AsEnumerable().OrderBy(a => a.PrivilegeId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.Where(x => x.PrivilegeId == PrivilegeIdDecrypted).ToList().Count();
@@ -118,7 +120,8 @@ namespace UserService.Repository
 
                 Privileges privileges = new Privileges()
                 {
-                    Name = model.Name
+                    Name = model.Name,
+                    CreatedAt = DateTime.Now
                 };
 
                 _context.Privileges.Add(privileges);

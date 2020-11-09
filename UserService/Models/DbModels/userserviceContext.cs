@@ -22,7 +22,7 @@ namespace UserService.Models.DBModels
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<UsersRoles> UsersRoles { get; set; }
 
-  
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +34,10 @@ namespace UserService.Models.DBModels
                 entity.ToTable("applications");
 
                 entity.Property(e => e.ApplicationId).HasColumnName("application_id");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasColumnType("timestamp");
 
                 entity.Property(e => e.Name)
                     .HasColumnName("name")
@@ -78,6 +82,10 @@ namespace UserService.Models.DBModels
                 entity.ToTable("privileges");
 
                 entity.Property(e => e.PrivilegeId).HasColumnName("privilege_id");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasColumnType("timestamp");
 
                 entity.Property(e => e.Name)
                     .HasColumnName("name")
