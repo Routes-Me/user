@@ -1,11 +1,15 @@
 ﻿using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Obfuscation;
+using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using UserService.Functions;
 using UserService.Helper.Abstraction;
+using UserService.Models;
 using UserService.Models.Common;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
@@ -16,11 +20,13 @@ namespace UserService.Helper.Repository
     {
         private readonly userserviceContext _context;
         private readonly AppSettings _appSettings;
+        private readonly Dependencies _dependencies;
 
-        public UserIncludedRepository(IOptions<AppSettings> appSettings, userserviceContext context)
+        public UserIncludedRepository(IOptions<AppSettings> appSettings, userserviceContext context, IOptions<Dependencies> dependencies)
         {
             _appSettings = appSettings.Value;
             _context = context;
+            _dependencies = dependencies.Value;
         }
         public dynamic GetApplicationIncludedData(List<UsersModel> usersModelList)
         {
@@ -44,6 +50,26 @@ namespace UserService.Helper.Repository
             }
             var ApplicationList = lstApplications.GroupBy(x => x.ApplicationId).Select(a => a.First()).ToList();
             return Common.SerializeJsonForIncludedRepo(ApplicationList.Cast<dynamic>().ToList());
+        }
+
+        public dynamic GetinstitutionsIncludedData(List<UsersModel> usersModelList)
+        {
+            List<InstitutionsModel> lstInstitutions = new List<InstitutionsModel>();
+            foreach (var item in usersModelList)
+            {
+                var client = new RestClient(_appSettings.Host + _dependencies.GetInstitutionUrl);
+                var request = new RestRequest(Method.GET);
+                IRestResponse response = client.Execute(request);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    var result = response.Content;
+                    var institutionsData = JsonConvert.DeserializeObject<InstitutionsData>(result);
+                    lstInstitutions.AddRange(institutionsData.data);
+                }
+            }
+
+            var institutionsList = lstInstitutions.GroupBy(x => x.InstitutionId).Select(a => a.First()).ToList();
+            return Common.SerializeJsonForIncludedRepo(institutionsList.Cast<dynamic>().ToList());
         }
 
         public dynamic GetPrivilegeIncludedData(List<UsersModel> usersModelList)

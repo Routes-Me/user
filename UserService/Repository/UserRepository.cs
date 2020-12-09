@@ -268,6 +268,9 @@ namespace UserService.Repository
 
                             else if (item.ToLower() == "privilege" || item.ToLower() == "privileges")
                                 includeData.privileges = _userIncludedRepository.GetPrivilegeIncludedData(usersModelList);
+
+                            else if (item.ToLower() == "institution" || item.ToLower() == "institutions")
+                                includeData.institutions = _userIncludedRepository.GetinstitutionsIncludedData(usersModelList);
                         }
                     }
                 }

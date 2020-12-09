@@ -175,4 +175,11 @@ namespace UserService.Models
         public string UserId { get; set; }
         public string InstitutionId { get; set; }
     }
+
+    public class InstitutionsData
+    {
+        public Pagination pagination { get; set; }
+        public List<InstitutionsModel> data { get; set; }
+    }
+
 }

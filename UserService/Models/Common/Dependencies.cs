@@ -11,7 +11,7 @@ namespace UserService.Models.Common
 
         public string InstitutionsUrl { get; set; }
         public string OfficersUrl { get; set; }
-        
+        public string GetInstitutionUrl { get; set; }
     }
 }
         
