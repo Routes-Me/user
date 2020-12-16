@@ -46,6 +46,20 @@ namespace UserService.Repository
             List<RolesModel> roles = new List<RolesModel>();
             try
             {
+                string EncryptedPassword = string.Empty;
+                if (encryption.IsDashboard(model.Password))
+                {
+                    EncryptedPassword = await encryption.EncryptAndEncode(model.Password, _appSettings.IVForDashboard, _appSettings.KeyForDashboard);
+                }
+                else
+                {
+                    EncryptedPassword = await encryption.EncryptAndEncode(model.Password, _appSettings.IVForAndroid, _appSettings.KeyForAndroid);
+                }
+
+                string pass = await encryption.EncryptAndEncode(model.Password, _appSettings.IVForDashboard, _appSettings.KeyForDashboard);
+
+
+
                 int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
                 string originalPassword = string.Empty;
                 if (model == null)
@@ -56,8 +70,9 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRole = _context.Roles.Where(x => x.ApplicationId == ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse)
-                    && x.PrivilegeId == ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)).FirstOrDefault();
+                    int ApplicationId = ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse);
+                    int PrivilegeId = ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse);
+                    var userRole = _context.Roles.Where(x => x.ApplicationId == ApplicationId && x.PrivilegeId == PrivilegeId).FirstOrDefault();
                     if (userRole == null)
                     {
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
@@ -321,8 +336,8 @@ namespace UserService.Repository
 
                 user = _context.Users.Where(x => x.UserId == UserId).FirstOrDefault();
                 if (user == null)
-                        return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
-                
+                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
+
                 if (!string.IsNullOrEmpty(model.NewPassword))
                 {
                     originalPassword = await PasswordDecryptionAsync(model.NewPassword);
