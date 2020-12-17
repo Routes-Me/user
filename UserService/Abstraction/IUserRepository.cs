@@ -13,5 +13,6 @@ namespace UserService.Abstraction
         dynamic DeleteUser(string id);
         dynamic UpdateUser(RegistrationModel model);
         dynamic GetUser(string userId, Pagination pageInfo, string includeType);
+        dynamic GetFilteredUsers(string institutionsId, string userId, Pagination pageInfo, string include);
     }
 }

@@ -40,5 +40,13 @@ namespace UserService.Controllers
             dynamic response = _usersRepository.UpdateUser(model);
             return StatusCode((int)response.statusCode, response);
         }
+
+        [HttpGet]
+        [Route("institutions/{institutionsId}/users/{id=0}")]
+        public IActionResult GetFilteredUsers(string institutionsId, string id, string Include, [FromQuery] Pagination pageInfo)
+        {
+            dynamic response = _usersRepository.GetFilteredUsers(institutionsId, id, pageInfo, Include);
+            return StatusCode((int)response.statusCode, response);
+        }
     }
 }

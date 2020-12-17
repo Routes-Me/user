@@ -57,7 +57,7 @@ namespace UserService.Helper.Repository
             List<InstitutionsModel> lstInstitutions = new List<InstitutionsModel>();
             foreach (var item in usersModelList)
             {
-                var client = new RestClient(_appSettings.Host + _dependencies.GetInstitutionUrl);
+                var client = new RestClient(_appSettings.Host + _dependencies.GetInstitutionUrl + item.InstitutionId);
                 var request = new RestRequest(Method.GET);
                 IRestResponse response = client.Execute(request);
                 if (response.StatusCode == HttpStatusCode.OK)
