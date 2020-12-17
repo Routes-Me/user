@@ -42,7 +42,7 @@ namespace UserService.Controllers
         }
 
         [HttpGet]
-        [Route("institutions/{institutionsId}/users/{id=0}")]
+        [Route("institutions/{institutionsId=0}/users/{id=0}")]
         public IActionResult GetFilteredUsers(string institutionsId, string id, string Include, [FromQuery] Pagination pageInfo)
         {
             dynamic response = _usersRepository.GetFilteredUsers(institutionsId, id, pageInfo, Include);
