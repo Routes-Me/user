@@ -52,26 +52,6 @@ namespace UserService.Helper.Repository
             return Common.SerializeJsonForIncludedRepo(ApplicationList.Cast<dynamic>().ToList());
         }
 
-        public dynamic GetinstitutionsIncludedData(List<UsersModel> usersModelList)
-        {
-            List<InstitutionsModel> lstInstitutions = new List<InstitutionsModel>();
-            foreach (var item in usersModelList)
-            {
-                var client = new RestClient(_appSettings.Host + _dependencies.GetInstitutionUrl + item.InstitutionId);
-                var request = new RestRequest(Method.GET);
-                IRestResponse response = client.Execute(request);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    var result = response.Content;
-                    var institutionsData = JsonConvert.DeserializeObject<InstitutionsData>(result);
-                    lstInstitutions.AddRange(institutionsData.data);
-                }
-            }
-
-            var institutionsList = lstInstitutions.GroupBy(x => x.InstitutionId).Select(a => a.First()).ToList();
-            return Common.SerializeJsonForIncludedRepo(institutionsList.Cast<dynamic>().ToList());
-        }
-
         public dynamic GetPrivilegeIncludedData(List<UsersModel> usersModelList)
         {
             List<PrivilegesModel> lstPrivileges = new List<PrivilegesModel>();

@@ -196,7 +196,6 @@ namespace UserService.Repository
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersModel> usersModelList = new List<UsersModel>();
-                var driverData = GetInstitutionIdsFromDrivers(userId);
                 if (userIdDecrypted == 0)
                 {
                     var usersData = _context.Users.Include(x => x.Phones).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
@@ -216,7 +215,6 @@ namespace UserService.Repository
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
                         usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.ToList().Count();
@@ -242,7 +240,6 @@ namespace UserService.Repository
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
                         usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.Where(x => x.UserId == userIdDecrypted).ToList().Count();
@@ -268,9 +265,6 @@ namespace UserService.Repository
 
                             else if (item.ToLower() == "privilege" || item.ToLower() == "privileges")
                                 includeData.privileges = _userIncludedRepository.GetPrivilegeIncludedData(usersModelList);
-
-                            else if (item.ToLower() == "institution" || item.ToLower() == "institutions")
-                                includeData.institutions = _userIncludedRepository.GetinstitutionsIncludedData(usersModelList);
                         }
                     }
                 }
@@ -327,116 +321,6 @@ namespace UserService.Repository
             catch (Exception)
             {
                 return lstDrivers;
-            }
-        }
-
-        public dynamic GetFilteredUsers(string institutionsId, string userId, Pagination pageInfo, string includeType)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(institutionsId))
-                    return ReturnResponse.ErrorResponse(CommonMessage.InstitutionsIdRequired, StatusCodes.Status400BadRequest);
-
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(userId), _appSettings.PrimeInverse);
-                int totalCount = 0;
-                UsersGetResponse response = new UsersGetResponse();
-                List<UsersModel> usersModelList = new List<UsersModel>();
-                var driverData = GetInstitutionIdsFromDrivers(userId);
-                if (userIdDecrypted == 0)
-                {
-                    var usersData = _context.Users.Include(x => x.Phones).ToList();
-                    foreach (var item in usersData)
-                    {
-                        UsersModel usersModel = new UsersModel();
-                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
-                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
-                        usersModel.Email = item.Email;
-                        usersModel.CreatedAt = item.CreatedAt;
-                        usersModel.Name = item.Name;
-                        var usersRoles = (from userroles in _context.UsersRoles
-                                          where userroles.UserId == item.UserId
-                                          select new RolesModel
-                                          {
-                                              ApplicationId = ObfuscationClass.EncodeId(userroles.ApplicationId, _appSettings.Prime).ToString(),
-                                              PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
-                                          }).ToList();
-                        usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
-                        usersModelList.Add(usersModel);
-                    }
-
-                }
-                else
-                {
-                    var usersData = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted).ToList();
-                    foreach (var item in usersData)
-                    {
-                        UsersModel usersModel = new UsersModel();
-                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
-                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
-                        usersModel.Email = item.Email;
-                        usersModel.CreatedAt = item.CreatedAt;
-                        usersModel.Name = item.Name;
-                        var usersRoles = (from userroles in _context.UsersRoles
-                                          where userroles.UserId == item.UserId
-                                          select new RolesModel
-                                          {
-                                              ApplicationId = ObfuscationClass.EncodeId(userroles.ApplicationId, _appSettings.Prime).ToString(),
-                                              PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
-                                          }).ToList();
-                        usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
-                        usersModelList.Add(usersModel);
-                    }
-                }
-
-                totalCount = usersModelList.Where(x => x.InstitutionId == institutionsId).ToList().Count();
-                usersModelList = usersModelList.Where(x => x.InstitutionId == institutionsId)
-                    .AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit)
-                    .Take(pageInfo.limit).ToList();
-
-                var page = new Pagination
-                {
-                    offset = pageInfo.offset,
-                    limit = pageInfo.limit,
-                    total = totalCount
-                };
-
-                dynamic includeData = new JObject();
-                if (!string.IsNullOrEmpty(includeType))
-                {
-                    string[] includeArr = includeType.Split(',');
-                    if (includeArr.Length > 0)
-                    {
-                        foreach (var item in includeArr)
-                        {
-                            if (item.ToLower() == "application" || item.ToLower() == "applications")
-                                includeData.applications = _userIncludedRepository.GetApplicationIncludedData(usersModelList);
-
-                            else if (item.ToLower() == "privilege" || item.ToLower() == "privileges")
-                                includeData.privileges = _userIncludedRepository.GetPrivilegeIncludedData(usersModelList);
-
-                            else if (item.ToLower() == "institution" || item.ToLower() == "institutions")
-                                includeData.institutions = _userIncludedRepository.GetinstitutionsIncludedData(usersModelList);
-                        }
-                    }
-                }
-
-                if (((JContainer)includeData).Count == 0)
-                    includeData = null;
-
-                response.message = CommonMessage.UserRetrived;
-                response.statusCode = StatusCodes.Status200OK;
-                response.status = true;
-                response.pagination = page;
-                response.data = usersModelList;
-                response.included = includeData;
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                return ReturnResponse.ExceptionResponse(ex);
             }
         }
     }
