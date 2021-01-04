@@ -10,6 +10,7 @@ using Microsoft.Extensions.Primitives;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.ResponseModel;
+using UserService.Models.DBModels;
 
 namespace UserService.Controllers
 {
@@ -20,10 +21,12 @@ namespace UserService.Controllers
         private readonly IAccountRepository _accountRepository;
         private readonly IVerificationRepository _verificationRepository;
         private static readonly HttpClient HttpClient = new HttpClient();
-        public AccountController(IAccountRepository accountRepository, IVerificationRepository verificationRepository)
+        private readonly userserviceContext _context;
+        public AccountController(IAccountRepository accountRepository, IVerificationRepository verificationRepository, userserviceContext context)
         {
             _accountRepository = accountRepository;
             _verificationRepository = verificationRepository;
+            _context = context;
         }
 
         [HttpPost]
@@ -44,6 +47,35 @@ namespace UserService.Controllers
             if (response.Item1 != null)
                 return StatusCode((int)response.Item1.errors[0].statusCode, response.Item1);
             return StatusCode((int)response.Item2.statusCode, response.Item2);
+        }
+
+        [HttpPost]
+        [Route("session")]
+        public async Task<IActionResult> CreateSession(SigninModel signinModel)
+        {
+            (Users user, string token) = (new Users(), "");
+            try
+                {StringValues application;
+                Request.Headers.TryGetValue("Application", out application);
+                (user, token) = await _accountRepository.CreateSession(signinModel, application.FirstOrDefault());
+                _context.Users.Update(user);
+                _context.SaveChanges();
+            }
+            catch (ArgumentNullException ex)
+            {
+                return StatusCode(StatusCodes.Status422UnprocessableEntity, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                dynamic errorResponse = ReturnResponse.ExceptionResponse(ex);
+                return StatusCode((int)errorResponse.statusCode, errorResponse);
+            }
+            SignInResponse response = new SignInResponse();
+            response.message = CommonMessage.LoginSuccess;
+            response.status = true;
+            response.token = token;
+            response.statusCode = StatusCodes.Status200OK;
+            return StatusCode((int)response.statusCode, response);
         }
 
         [HttpPut]

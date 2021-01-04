@@ -308,6 +308,110 @@ namespace UserService.Repository
             }
         }
 
+        public void Authenticate(Users user, string originalPassword)
+        {
+            if (user == null || !_passwordHasherRepository.Check(user.Password, originalPassword).Verified)
+            {
+                throw new Exception(CommonMessage.UserNotExist);
+            }
+        }
+
+        private async Task<string> Validate(SigninModel model) {
+            if (String.IsNullOrEmpty(model.Username) || String.IsNullOrEmpty(model.Password))
+            {
+                throw new Exception(CommonMessage.IncorrectUser);
+            }
+            string originalPassword = await PasswordDecryptionAsync(model.Password);
+            if (originalPassword == "Unauthorized Access")
+            {
+                throw new Exception(CommonMessage.IncorrectPassword);
+            }
+            return originalPassword;
+        }
+
+        private ErrorDetails FormErrorDetails(int? code, int statusCode, string message)
+        {
+            ErrorDetails details = new ErrorDetails();
+
+            details.statusCode = statusCode;
+            details.code = code ?? 1;
+            details.detail = message;
+
+            return details;
+        }
+
+        private List<UserRoleForToken> GetUsersRoles(Users user)
+        {
+            List<UserRoleForToken> usersRoles = (from usersrole in _context.UsersRoles
+                                  join roles in _context.Roles on new { x = usersrole.PrivilegeId, y = usersrole.ApplicationId } equals new { x = roles.PrivilegeId, y = roles.ApplicationId }
+                                  where usersrole.UserId == user.UserId
+                                  select new UserRoleForToken
+                                  {
+                                      Application = roles.Application.Name,
+                                      Privilege = roles.Privilege.Name,
+                                  }).ToList();
+
+            if (usersRoles == null || usersRoles.Count == 0)
+            {
+                throw new Exception(CommonMessage.IncorrectUserRole);
+            }
+
+            return usersRoles;
+        }
+
+        private string GetUsersInstitutions(Users user)
+        {
+            var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
+            var request = new RestRequest(Method.GET);
+            IRestResponse driverResponse = client.Execute(request);
+            if (driverResponse.StatusCode != HttpStatusCode.OK)
+            {
+                throw new Exception(CommonMessage.InstitutionsIdRequired);
+            }
+            var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(driverResponse.Content);
+            return String.Join(",", institutionData.data.Select(x => x.InstitutionId));
+        }
+
+        public async Task<(Users users, string token)> CreateSession(SigninModel signinModel, StringValues application)
+        {
+            ErrorResponse errorResponse = new ErrorResponse();
+            errorResponse.errors = new List<ErrorDetails>();
+            ErrorDetails errorDetails = new ErrorDetails();
+            string originalPassword = string.Empty;
+
+            String username = signinModel.Username;
+            String password = signinModel.Password;
+
+            try
+            {
+                originalPassword = await Validate(signinModel);
+                Users user = _context.Users.Where(x => x.Email == signinModel.Username).FirstOrDefault();
+                Authenticate(user, originalPassword);
+                List<UserRoleForToken> usersRoles = GetUsersRoles(user);
+                string institutionIds = GetUsersInstitutions(user);
+
+                SessionTokenGenerator sessionTokenGenerator = new SessionTokenGenerator()
+                {
+                    Name = user.Name,
+                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
+                    Roles = usersRoles,
+                    InstitutionId = institutionIds
+                };
+                string token = _helper.GenerateSessionToken(sessionTokenGenerator, application);
+
+                user.LastLoginDate = DateTime.Now;
+                return (user, token);
+
+                // return (null, response);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+                //errorResponse.errors.Add(FormErrorDetails(1, StatusCodes.Status401Unauthorized, ex.Message));
+                //return (errorResponse, null);
+            }
+        }
+
         public async Task<dynamic> ChangePassword(ChangePasswordModel model)
         {
             UsersResponse response = new UsersResponse();

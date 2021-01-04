@@ -18,6 +18,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using UserService.Helper.Abstraction;
 using UserService.Models.Common;
+using UserService.Models;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
 
@@ -77,6 +78,43 @@ namespace UserService.Helper.Repository
                     token = new JwtSecurityTokenHandler().WriteToken(tokenString);
                 }
                 return token;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public string GenerateSessionToken(SessionTokenGenerator sessionTokenGenerator, StringValues application)
+        {
+            try
+            {
+                if (sessionTokenGenerator == null)
+                    throw new ArgumentNullException(CommonMessage.TokenDataNull);
+
+                var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
+                var claimsData = new Claim[]
+                {
+                    new Claim("nme", string.IsNullOrEmpty(sessionTokenGenerator.Name) ? string.Empty : sessionTokenGenerator.Name.ToString()),
+                    new Claim("sub", string.IsNullOrEmpty(sessionTokenGenerator.UserId) ? string.Empty : sessionTokenGenerator.UserId.ToString()),
+                    new Claim("rol", JsonConvert.SerializeObject(sessionTokenGenerator.Roles)),
+                    application.ToString().ToLower() == "dashboard"
+                        ? new Claim("ins", string.IsNullOrEmpty(sessionTokenGenerator.InstitutionId) ? string.Empty : sessionTokenGenerator.InstitutionId.ToString()) 
+                        : null,
+                };
+
+                var tokenString = new JwtSecurityToken(
+                                    issuer: _appSettings.ValidIssuer,
+                                    audience: _appSettings.ValidAudience,
+                                    expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMinutes(60),
+                                    claims: claimsData,
+                                    signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                                    );
+                return new JwtSecurityTokenHandler().WriteToken(tokenString);
+            }
+            catch (ArgumentNullException ex)
+            {
+                throw ex;
             }
             catch (Exception ex)
             {

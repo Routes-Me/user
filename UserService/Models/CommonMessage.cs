@@ -71,7 +71,7 @@ namespace UserService.Models
         public static string ApplicationAssociatedWithRole = "Application associated with role.";
         public static string ApplicationAssociatedWithUserRole = "Application associated with user role.";
         public static string InstitutionsIdRequired = "Valid institutionsId required.";
-        
+        public static string TokenDataNull = "Token data is null.";
 
     }
 }       
