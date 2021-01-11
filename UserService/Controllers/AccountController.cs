@@ -55,7 +55,8 @@ namespace UserService.Controllers
         {
             (Users user, string token) = (new Users(), "");
             try
-                {StringValues application;
+            {
+                StringValues application;
                 Request.Headers.TryGetValue("Application", out application);
                 (user, token) = await _accountRepository.CreateSession(signinModel, application.FirstOrDefault());
                 _context.Users.Update(user);

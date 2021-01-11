@@ -104,9 +104,9 @@ namespace UserService.Helper.Repository
                 };
 
                 var tokenString = new JwtSecurityToken(
-                                    issuer: _appSettings.ValidIssuer,
-                                    audience: _appSettings.ValidAudience,
-                                    expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMinutes(60),
+                                    issuer: _appSettings.SessionTokenIssuer,
+                                    audience: GetAudience(application), // _appSettings.ValidAudience,
+                                    expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMinutes(15),
                                     claims: claimsData,
                                     signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                                     );
@@ -119,6 +119,17 @@ namespace UserService.Helper.Repository
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+        private string GetAudience(StringValues application)
+        {
+            switch (application.ToString().ToLower())
+            {
+                case "dashboard": return "https://dashboard.routesme.com";
+                case "app": return "https://app.routesme.com";
+                case "screen": return "https://screen.routesme.com";
+                default: return CommonMessage.UnknownApplication;
             }
         }
 

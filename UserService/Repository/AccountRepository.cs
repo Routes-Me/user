@@ -366,7 +366,7 @@ namespace UserService.Repository
             IRestResponse driverResponse = client.Execute(request);
             if (driverResponse.StatusCode != HttpStatusCode.OK)
             {
-                throw new Exception(CommonMessage.InstitutionsIdRequired);
+                return string.Empty;
             }
             var institutionData = JsonConvert.DeserializeObject<InstitutionResponse>(driverResponse.Content);
             return String.Join(",", institutionData.data.Select(x => x.InstitutionId));
@@ -374,9 +374,6 @@ namespace UserService.Repository
 
         public async Task<(Users users, string token)> CreateSession(SigninModel signinModel, StringValues application)
         {
-            ErrorResponse errorResponse = new ErrorResponse();
-            errorResponse.errors = new List<ErrorDetails>();
-            ErrorDetails errorDetails = new ErrorDetails();
             string originalPassword = string.Empty;
 
             String username = signinModel.Username;
@@ -401,14 +398,10 @@ namespace UserService.Repository
 
                 user.LastLoginDate = DateTime.Now;
                 return (user, token);
-
-                // return (null, response);
             }
             catch (Exception ex)
             {
-                throw ex;
-                //errorResponse.errors.Add(FormErrorDetails(1, StatusCodes.Status401Unauthorized, ex.Message));
-                //return (errorResponse, null);
+                throw;
             }
         }
 
