@@ -329,17 +329,6 @@ namespace UserService.Repository
             return originalPassword;
         }
 
-        private ErrorDetails FormErrorDetails(int? code, int statusCode, string message)
-        {
-            ErrorDetails details = new ErrorDetails();
-
-            details.statusCode = statusCode;
-            details.code = code ?? 1;
-            details.detail = message;
-
-            return details;
-        }
-
         private List<UserRoleForToken> GetUsersRoles(Users user)
         {
             List<UserRoleForToken> usersRoles = (from usersrole in _context.UsersRoles
