@@ -50,7 +50,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("session")]
+        [Route("sessions")]
         public async Task<IActionResult> CreateSession(SigninModel signinModel)
         {
             (Users user, string token) = (new Users(), "");
