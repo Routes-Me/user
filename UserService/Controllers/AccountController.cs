@@ -27,7 +27,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost]
-        [Route("signup")]
+        [Route("onlyAdminPostAccountRoutes")]
         public async Task<IActionResult> Signup(RegistrationModel model)
         {
             dynamic response = await _accountRepository.SignUp(model);
