@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using UserService.Models;
 using UserService.Models.ResponseModel;
+using UserService.Models.DBModels;
 
 namespace UserService.Abstraction
 {
@@ -9,6 +10,7 @@ namespace UserService.Abstraction
     {
         Task<dynamic> SignUp(RegistrationModel model);
         Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model, StringValues Application);
+        Task<(Users users, string token)> CreateSession(SigninModel signinModel, StringValues application);
         Task<dynamic> ChangePassword(ChangePasswordModel model);
         Task<dynamic> ForgotPassword(string email);
     }
