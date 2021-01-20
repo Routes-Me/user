@@ -13,7 +13,6 @@ namespace UserService.Models.ResponseModel
         public string Phone { get; set; }
         public DateTime? CreatedAt { get; set; }
         public List<RolesModel> Roles { get; set; }
-        public string InstitutionId { get; set; }
     }
 
     public class LoginUser
@@ -24,7 +23,6 @@ namespace UserService.Models.ResponseModel
         public string PhoneNumber { get; set; }
         public string Password { get; set; }
         public List<UserRoleForToken> Roles { get; set; }
-        public string InstitutionId { get; set; }
         public bool isOfficer { get; set; }
         public string OfficerId { get; set; }
         

@@ -196,7 +196,6 @@ namespace UserService.Repository
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersModel> usersModelList = new List<UsersModel>();
-                var driverData = GetInstitutionIdsFromDrivers(userId);
                 if (userIdDecrypted == 0)
                 {
                     var usersData = _context.Users.Include(x => x.Phones).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
@@ -216,7 +215,6 @@ namespace UserService.Repository
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
                         usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.ToList().Count();
@@ -242,7 +240,6 @@ namespace UserService.Repository
                                               PrivilegeId = ObfuscationClass.EncodeId(userroles.PrivilegeId, _appSettings.Prime).ToString()
                                           }).ToList();
                         usersModel.Roles = usersRoles;
-                        usersModel.InstitutionId = driverData.Where(x => x.UserId == ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString()).Select(x => x.InstitutionId).FirstOrDefault();
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.Where(x => x.UserId == userIdDecrypted).ToList().Count();
@@ -268,9 +265,6 @@ namespace UserService.Repository
 
                             else if (item.ToLower() == "privilege" || item.ToLower() == "privileges")
                                 includeData.privileges = _userIncludedRepository.GetPrivilegeIncludedData(usersModelList);
-
-                            else if (item.ToLower() == "institution" || item.ToLower() == "institutions")
-                                includeData.institutions = _userIncludedRepository.GetinstitutionsIncludedData(usersModelList);
                         }
                     }
                 }

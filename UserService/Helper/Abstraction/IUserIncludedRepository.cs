@@ -10,6 +10,5 @@ namespace UserService.Helper.Abstraction
     {
         dynamic GetApplicationIncludedData(List<UsersModel> usersModelList);
         dynamic GetPrivilegeIncludedData(List<UsersModel> usersModelList);
-        dynamic GetinstitutionsIncludedData(List<UsersModel> usersModelList);
     }
 }
