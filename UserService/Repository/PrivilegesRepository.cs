@@ -53,15 +53,14 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic GetPrivilege(int id, Pagination pageInfo)
+        public dynamic GetPrivilege(string privilegeId, Pagination pageInfo)
         {
             PrivilegesResponse response = new PrivilegesResponse();
             int totalCount = 0;
             try
             {
-                var PrivilegeIdDecrypted = Obfuscation.Decode(id.ToString());
                 List<PrivilegesModel> privilegesModelList = new List<PrivilegesModel>();
-                if (PrivilegeIdDecrypted == 0)
+                if (string.IsNullOrEmpty(privilegeId))
                 {
                     privilegesModelList = (from privilege in _context.Privileges
                                            select new PrivilegesModel()
@@ -75,6 +74,7 @@ namespace UserService.Repository
                 }
                 else
                 {
+                    var PrivilegeIdDecrypted = Obfuscation.Decode(privilegeId);
                     privilegesModelList = (from privilege in _context.Privileges
                                            where privilege.PrivilegeId == PrivilegeIdDecrypted
                                            select new PrivilegesModel()

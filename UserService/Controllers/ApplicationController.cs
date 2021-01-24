@@ -37,10 +37,10 @@ namespace UserService.Controllers
         }
 
         [HttpGet]
-        [Route("applications/{id=0}")]
-        public IActionResult Get(int id, [FromQuery] Pagination pageInfo)
+        [Route("applications/{applicationId?}")]
+        public IActionResult Get(string applicationId, [FromQuery] Pagination pageInfo)
         {
-            dynamic response = _applicationRepository.GetApplication(id, pageInfo);
+            dynamic response = _applicationRepository.GetApplication(applicationId, pageInfo);
             return StatusCode((int)response.statusCode, response);
         }
 

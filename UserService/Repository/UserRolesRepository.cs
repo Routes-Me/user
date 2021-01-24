@@ -58,10 +58,8 @@ namespace UserService.Repository
             int totalCount = 0;
             try
             {
-                var ApplicationIdDecrypted = Obfuscation.Decode(ApplicationId);
-                var PrivilegeIdDecrypted = Obfuscation.Decode(PrivilegeId);
                 List<RolesModel> userRolesModelList = new List<RolesModel>();
-                if (ApplicationIdDecrypted == 0 && PrivilegeIdDecrypted == 0)
+                if (string.IsNullOrEmpty(ApplicationId) && string.IsNullOrEmpty(PrivilegeId))
                 {
                     userRolesModelList = (from userRole in _context.Roles
                                           select new RolesModel()
@@ -74,6 +72,8 @@ namespace UserService.Repository
                 }
                 else
                 {
+                    var ApplicationIdDecrypted = Obfuscation.Decode(ApplicationId);
+                    var PrivilegeIdDecrypted = Obfuscation.Decode(PrivilegeId);
                     userRolesModelList = (from userRole in _context.Roles
                                           where userRole.PrivilegeId == PrivilegeIdDecrypted && userRole.ApplicationId == ApplicationIdDecrypted
                                           select new RolesModel()

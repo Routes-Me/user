@@ -11,7 +11,7 @@ namespace UserService.Abstraction
     {
         dynamic PostPrivilege(PrivilegesModel model);
         dynamic PutPrivilege(PrivilegesModel model);
-        dynamic GetPrivilege(int id, Pagination pageInfo);
+        dynamic GetPrivilege(string privilegeId, Pagination pageInfo);
         dynamic DeletePrivilege(int id);
     }
 }

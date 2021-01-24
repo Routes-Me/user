@@ -51,15 +51,14 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic GetApplication(int id, Pagination pageInfo)
+        public dynamic GetApplication(string applicationId, Pagination pageInfo)
         {
             ApplicationResponse response = new ApplicationResponse();
             int totalCount = 0;
             try
             {
-                var ApplicationIdDecrypted = Obfuscation.Decode(id.ToString());
                 List<ApplicationsModel> ApplicationsModelList = new List<ApplicationsModel>();
-                if (ApplicationIdDecrypted == 0)
+                if (string.IsNullOrEmpty(applicationId))
                 {
                     ApplicationsModelList = (from application in _context.Applications
                                              select new ApplicationsModel()
@@ -73,6 +72,7 @@ namespace UserService.Repository
                 }
                 else
                 {
+                    var ApplicationIdDecrypted = Obfuscation.Decode(applicationId);
                     ApplicationsModelList = (from application in _context.Applications
                                              where application.ApplicationId == ApplicationIdDecrypted
                                              select new ApplicationsModel()

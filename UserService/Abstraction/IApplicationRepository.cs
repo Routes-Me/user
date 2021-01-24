@@ -11,7 +11,7 @@ namespace UserService.Abstraction
     {
         dynamic PostApplication(ApplicationsModel model);
         dynamic PutApplication(ApplicationsModel model);
-        dynamic GetApplication(int id, Pagination pageInfo);
+        dynamic GetApplication(string applicationId, Pagination pageInfo);
         dynamic DeleteApplication(int id);
     }
 }

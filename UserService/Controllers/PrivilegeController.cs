@@ -37,10 +37,10 @@ namespace UserService.Controllers
         }
 
         [HttpGet]
-        [Route("privileges/{id=0}")]
-        public IActionResult Get(int id, [FromQuery] Pagination pageInfo)
+        [Route("privileges/{privilegeId?}")]
+        public IActionResult Get(string privilegeId, [FromQuery] Pagination pageInfo)
         {
-            dynamic response = _privilegesRepository.GetPrivilege(id, pageInfo);
+            dynamic response = _privilegesRepository.GetPrivilege(privilegeId, pageInfo);
             return StatusCode((int)response.statusCode, response);
         }
 
