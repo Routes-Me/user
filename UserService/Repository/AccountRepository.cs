@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Obfuscation;
+using RoutesSecurity;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -46,7 +46,7 @@ namespace UserService.Repository
             List<RolesModel> roles = new List<RolesModel>();
             try
             {
-                int institutionIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.InstitutionId), _appSettings.PrimeInverse);
+                int institutionIdDecrypted = Obfuscation.Decode(model.InstitutionId);
                 string originalPassword = string.Empty;
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);
@@ -56,8 +56,8 @@ namespace UserService.Repository
 
                 foreach (var role in model.Roles)
                 {
-                    var userRole = _context.Roles.Where(x => x.ApplicationId == ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse)
-                    && x.PrivilegeId == ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)).FirstOrDefault();
+                    var userRole = _context.Roles.Where(x => x.ApplicationId == Obfuscation.Decode(role.ApplicationId)
+                    && x.PrivilegeId == Obfuscation.Decode(role.PrivilegeId)).FirstOrDefault();
                     if (userRole == null)
                     {
                         return ReturnResponse.ErrorResponse(CommonMessage.UserRoleNotFound, StatusCodes.Status404NotFound);
@@ -65,8 +65,8 @@ namespace UserService.Repository
                     else
                     {
                         RolesModel rolesModel = new RolesModel();
-                        rolesModel.ApplicationId = ObfuscationClass.EncodeId(userRole.ApplicationId, _appSettings.Prime).ToString();
-                        rolesModel.PrivilegeId = ObfuscationClass.EncodeId(userRole.PrivilegeId, _appSettings.Prime).ToString();
+                        rolesModel.ApplicationId = Obfuscation.Encode(userRole.ApplicationId).ToString();
+                        rolesModel.PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId).ToString();
                         roles.Add(rolesModel);
                     }
                 }
@@ -123,8 +123,8 @@ namespace UserService.Repository
                     UsersRoles usersroles = new UsersRoles()
                     {
                         UserId = users.UserId,
-                        ApplicationId = ObfuscationClass.DecodeId(Convert.ToInt32(role.ApplicationId), _appSettings.PrimeInverse),
-                        PrivilegeId = ObfuscationClass.DecodeId(Convert.ToInt32(role.PrivilegeId), _appSettings.PrimeInverse)
+                        ApplicationId = Obfuscation.Decode(role.ApplicationId),
+                        PrivilegeId = Obfuscation.Decode(role.PrivilegeId)
                     };
                     _context.UsersRoles.Add(usersroles);
                 }
@@ -135,7 +135,7 @@ namespace UserService.Repository
                     DriversModel driver = new DriversModel()
                     {
                         InstitutionId = model.InstitutionId,
-                        UserId = ObfuscationClass.EncodeId(users.UserId, _appSettings.Prime).ToString()
+                        UserId = Obfuscation.Encode(users.UserId).ToString()
                     };
 
                     var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
@@ -156,7 +156,7 @@ namespace UserService.Repository
                 response.message = CommonMessage.UserInsert;
                 response.statusCode = StatusCodes.Status201Created;
                 response.Email = model.Email;
-                response.UserId = ObfuscationClass.EncodeId(users.UserId, _appSettings.Prime).ToString();
+                response.UserId = Obfuscation.Encode(users.UserId).ToString();
                 return response;
             }
             catch (Exception ex)
@@ -262,7 +262,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId).ToString());
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -279,7 +279,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
+                    UserId = Obfuscation.Encode(user.UserId).ToString(),
                     Name = user.Name,
                     Email = user.Email,
                     PhoneNumber = _context.Phones.Where(x => x.UserId == user.UserId).Select(x => x.Number).FirstOrDefault(),
@@ -350,7 +350,7 @@ namespace UserService.Repository
 
         private string GetUsersInstitutions(Users user)
         {
-            var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString());
+            var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId).ToString());
             var request = new RestRequest(Method.GET);
             IRestResponse driverResponse = client.Execute(request);
             if (driverResponse.StatusCode != HttpStatusCode.OK)
@@ -379,7 +379,7 @@ namespace UserService.Repository
                 SessionTokenGenerator sessionTokenGenerator = new SessionTokenGenerator()
                 {
                     Name = user.Name,
-                    UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
+                    UserId = Obfuscation.Encode(user.UserId).ToString(),
                     Roles = usersRoles,
                     InstitutionId = institutionIds
                 };
@@ -400,7 +400,7 @@ namespace UserService.Repository
             string originalPassword = string.Empty;
             try
             {
-                int UserId = ObfuscationClass.DecodeId(Convert.ToInt32(model.UserId), _appSettings.PrimeInverse);
+                int UserId = Obfuscation.Decode(model.UserId);
                 Users user = new Users();
                 if (model == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.BadRequest, StatusCodes.Status400BadRequest);

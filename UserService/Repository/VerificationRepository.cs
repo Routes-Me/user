@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using Obfuscation;
+using RoutesSecurity;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -174,7 +174,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString());
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(phone.User.UserId).ToString());
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -191,7 +191,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = ObfuscationClass.EncodeId(phone.User.UserId, _appSettings.Prime).ToString(),
+                    UserId = Obfuscation.Encode(phone.User.UserId).ToString(),
                     Name = phone.User.Name,
                     Email = phone.User.Email,
                     PhoneNumber = phone.Number,
@@ -216,7 +216,7 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(model.UserId), _appSettings.PrimeInverse);
+                var userIdDecrypted = Obfuscation.Decode(model.UserId);
                 if (string.IsNullOrEmpty(model.Email))
                     return ReturnResponse.ErrorResponse(CommonMessage.EmailRequired, StatusCodes.Status400BadRequest);
 
@@ -246,7 +246,7 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(id), _appSettings.PrimeInverse);
+                var userIdDecrypted = Obfuscation.Decode(id);
                 var usersData = _context.Users.Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
                 if (usersData == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status400BadRequest);

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Obfuscation;
+using RoutesSecurity;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -169,7 +169,7 @@ namespace UserService.Helper.Repository
                         }
                     }
                 }
-                string UserId = ObfuscationClass.EncodeId(users.UserId, _appSettings.Prime).ToString();
+                string UserId = Obfuscation.Encode(users.UserId).ToString();
                 var client = new SendGridClient(_sendGridSettings.APIKey);
                 if (IsRoutesApp == true)
                 {
