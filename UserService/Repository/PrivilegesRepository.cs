@@ -65,7 +65,7 @@ namespace UserService.Repository
                     privilegesModelList = (from privilege in _context.Privileges
                                            select new PrivilegesModel()
                                            {
-                                               PrivilegeId = Obfuscation.Encode(privilege.PrivilegeId).ToString(),
+                                               PrivilegeId = Obfuscation.Encode(privilege.PrivilegeId),
                                                Name = privilege.Name,
                                                CreatedAt = privilege.CreatedAt
                                            }).AsEnumerable().OrderBy(a => a.PrivilegeId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
@@ -79,7 +79,7 @@ namespace UserService.Repository
                                            where privilege.PrivilegeId == PrivilegeIdDecrypted
                                            select new PrivilegesModel()
                                            {
-                                               PrivilegeId = Obfuscation.Encode(privilege.PrivilegeId).ToString(),
+                                               PrivilegeId = Obfuscation.Encode(privilege.PrivilegeId),
                                                Name = privilege.Name,
                                                CreatedAt = privilege.CreatedAt
                                            }).AsEnumerable().OrderBy(a => a.PrivilegeId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();

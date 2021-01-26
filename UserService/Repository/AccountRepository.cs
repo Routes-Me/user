@@ -65,8 +65,8 @@ namespace UserService.Repository
                     else
                     {
                         RolesModel rolesModel = new RolesModel();
-                        rolesModel.ApplicationId = Obfuscation.Encode(userRole.ApplicationId).ToString();
-                        rolesModel.PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId).ToString();
+                        rolesModel.ApplicationId = Obfuscation.Encode(userRole.ApplicationId);
+                        rolesModel.PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId);
                         roles.Add(rolesModel);
                     }
                 }
@@ -135,7 +135,7 @@ namespace UserService.Repository
                     DriversModel driver = new DriversModel()
                     {
                         InstitutionId = model.InstitutionId,
-                        UserId = Obfuscation.Encode(users.UserId).ToString()
+                        UserId = Obfuscation.Encode(users.UserId)
                     };
 
                     var client = new RestClient(_appSettings.Host + _dependencies.VehicleUrl);
@@ -156,7 +156,7 @@ namespace UserService.Repository
                 response.message = CommonMessage.UserInsert;
                 response.statusCode = StatusCodes.Status201Created;
                 response.Email = model.Email;
-                response.UserId = Obfuscation.Encode(users.UserId).ToString();
+                response.UserId = Obfuscation.Encode(users.UserId);
                 return response;
             }
             catch (Exception ex)
@@ -262,7 +262,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId).ToString());
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId));
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -279,7 +279,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = Obfuscation.Encode(user.UserId).ToString(),
+                    UserId = Obfuscation.Encode(user.UserId),
                     Name = user.Name,
                     Email = user.Email,
                     PhoneNumber = _context.Phones.Where(x => x.UserId == user.UserId).Select(x => x.Number).FirstOrDefault(),
@@ -350,7 +350,7 @@ namespace UserService.Repository
 
         private string GetUsersInstitutions(Users user)
         {
-            var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId).ToString());
+            var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(user.UserId));
             var request = new RestRequest(Method.GET);
             IRestResponse driverResponse = client.Execute(request);
             if (driverResponse.StatusCode != HttpStatusCode.OK)
@@ -379,7 +379,7 @@ namespace UserService.Repository
                 SessionTokenGenerator sessionTokenGenerator = new SessionTokenGenerator()
                 {
                     Name = user.Name,
-                    UserId = Obfuscation.Encode(user.UserId).ToString(),
+                    UserId = Obfuscation.Encode(user.UserId),
                     Roles = usersRoles,
                     InstitutionId = institutionIds
                 };

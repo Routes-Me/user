@@ -174,7 +174,7 @@ namespace UserService.Repository
                 string institutionIds = string.Empty;
                 try
                 {
-                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(phone.User.UserId).ToString());
+                    var client = new RestClient(_appSettings.Host + _dependencies.InstitutionsUrl + Obfuscation.Encode(phone.User.UserId));
                     var request = new RestRequest(Method.GET);
                     IRestResponse driverResponse = client.Execute(request);
                     if (driverResponse.StatusCode == HttpStatusCode.OK)
@@ -191,7 +191,7 @@ namespace UserService.Repository
 
                 TokenGenerator tokenGenerator = new TokenGenerator()
                 {
-                    UserId = Obfuscation.Encode(phone.User.UserId).ToString(),
+                    UserId = Obfuscation.Encode(phone.User.UserId),
                     Name = phone.User.Name,
                     Email = phone.User.Email,
                     PhoneNumber = phone.Number,

@@ -64,8 +64,8 @@ namespace UserService.Repository
                     userRolesModelList = (from userRole in _context.Roles
                                           select new RolesModel()
                                           {
-                                              ApplicationId = Obfuscation.Encode(userRole.ApplicationId).ToString(),
-                                              PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId).ToString(),
+                                              ApplicationId = Obfuscation.Encode(userRole.ApplicationId),
+                                              PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId),
                                           }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.ToList().Count();
@@ -78,8 +78,8 @@ namespace UserService.Repository
                                           where userRole.PrivilegeId == PrivilegeIdDecrypted && userRole.ApplicationId == ApplicationIdDecrypted
                                           select new RolesModel()
                                           {
-                                              ApplicationId = Obfuscation.Encode(userRole.ApplicationId).ToString(),
-                                              PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId).ToString(),
+                                              ApplicationId = Obfuscation.Encode(userRole.ApplicationId),
+                                              PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId),
                                           }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
                     totalCount = _context.Roles.Where(x => x.PrivilegeId == PrivilegeIdDecrypted && x.ApplicationId == ApplicationIdDecrypted).ToList().Count();

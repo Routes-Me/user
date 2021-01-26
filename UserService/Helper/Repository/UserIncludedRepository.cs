@@ -41,7 +41,7 @@ namespace UserService.Helper.Repository
                     {
                         ApplicationsModel objModel = new ApplicationsModel()
                         {
-                            ApplicationId = Obfuscation.Encode(applicationDetails.ApplicationId).ToString(),
+                            ApplicationId = Obfuscation.Encode(applicationDetails.ApplicationId),
                             Name = applicationDetails.Name
                         };
                         lstApplications.Add(objModel);
@@ -65,7 +65,7 @@ namespace UserService.Helper.Repository
                     {
                         PrivilegesModel objModel = new PrivilegesModel()
                         {
-                            PrivilegeId = Obfuscation.Encode(privilegeDetails.PrivilegeId).ToString(),
+                            PrivilegeId = Obfuscation.Encode(privilegeDetails.PrivilegeId),
                             Name = privilegeDetails.Name
                         };
                         lstPrivileges.Add(objModel);

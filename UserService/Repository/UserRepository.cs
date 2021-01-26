@@ -86,8 +86,8 @@ namespace UserService.Repository
                     else
                     {
                         RolesModel rolesModel = new RolesModel();
-                        rolesModel.ApplicationId = Obfuscation.Encode(userRole.ApplicationId).ToString();
-                        rolesModel.PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId).ToString();
+                        rolesModel.ApplicationId = Obfuscation.Encode(userRole.ApplicationId);
+                        rolesModel.PrivilegeId = Obfuscation.Encode(userRole.PrivilegeId);
                         roles.Add(rolesModel);
                     }
                 }
@@ -142,7 +142,7 @@ namespace UserService.Repository
 
                 if (institutionIdDecrypted != 0)
                 {
-                    string EncodedUserId = Obfuscation.Encode(user.UserId).ToString();
+                    string EncodedUserId = Obfuscation.Encode(user.UserId);
                     var driverData = GetInstitutionIdsFromDrivers(EncodedUserId);
 
                     if (driverData == null || driverData.Count == 0)
@@ -201,7 +201,7 @@ namespace UserService.Repository
                     foreach (var item in usersData)
                     {
                         UsersModel usersModel = new UsersModel();
-                        usersModel.UserId = Obfuscation.Encode(item.UserId).ToString();
+                        usersModel.UserId = Obfuscation.Encode(item.UserId);
                         usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.Email = item.Email;
                         usersModel.CreatedAt = item.CreatedAt;
@@ -210,8 +210,8 @@ namespace UserService.Repository
                                           where userroles.UserId == item.UserId
                                           select new RolesModel
                                           {
-                                              ApplicationId = Obfuscation.Encode(userroles.ApplicationId).ToString(),
-                                              PrivilegeId = Obfuscation.Encode(userroles.PrivilegeId).ToString()
+                                              ApplicationId = Obfuscation.Encode(userroles.ApplicationId),
+                                              PrivilegeId = Obfuscation.Encode(userroles.PrivilegeId)
                                           }).ToList();
                         usersModel.Roles = usersRoles;
                         usersModelList.Add(usersModel);
@@ -227,7 +227,7 @@ namespace UserService.Repository
                     foreach (var item in usersData)
                     {
                         UsersModel usersModel = new UsersModel();
-                        usersModel.UserId = Obfuscation.Encode(item.UserId).ToString();
+                        usersModel.UserId = Obfuscation.Encode(item.UserId);
                         usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.Email = item.Email;
                         usersModel.CreatedAt = item.CreatedAt;
@@ -236,8 +236,8 @@ namespace UserService.Repository
                                           where userroles.UserId == item.UserId
                                           select new RolesModel
                                           {
-                                              ApplicationId = Obfuscation.Encode(userroles.ApplicationId).ToString(),
-                                              PrivilegeId = Obfuscation.Encode(userroles.PrivilegeId).ToString()
+                                              ApplicationId = Obfuscation.Encode(userroles.ApplicationId),
+                                              PrivilegeId = Obfuscation.Encode(userroles.PrivilegeId)
                                           }).ToList();
                         usersModel.Roles = usersRoles;
                         usersModelList.Add(usersModel);

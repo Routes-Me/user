@@ -169,7 +169,7 @@ namespace UserService.Helper.Repository
                         }
                     }
                 }
-                string UserId = Obfuscation.Encode(users.UserId).ToString();
+                string UserId = Obfuscation.Encode(users.UserId);
                 var client = new SendGridClient(_sendGridSettings.APIKey);
                 if (IsRoutesApp == true)
                 {

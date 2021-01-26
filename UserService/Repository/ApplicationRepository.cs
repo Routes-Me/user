@@ -63,7 +63,7 @@ namespace UserService.Repository
                     ApplicationsModelList = (from application in _context.Applications
                                              select new ApplicationsModel()
                                              {
-                                                 ApplicationId = Obfuscation.Encode(application.ApplicationId).ToString(),
+                                                 ApplicationId = Obfuscation.Encode(application.ApplicationId),
                                                  Name = application.Name,
                                                  CreatedAt =application.CreatedAt
                                              }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
@@ -77,7 +77,7 @@ namespace UserService.Repository
                                              where application.ApplicationId == ApplicationIdDecrypted
                                              select new ApplicationsModel()
                                              {
-                                                 ApplicationId = Obfuscation.Encode(application.ApplicationId).ToString(),
+                                                 ApplicationId = Obfuscation.Encode(application.ApplicationId),
                                                  Name = application.Name,
                                                  CreatedAt = application.CreatedAt
                                              }).AsEnumerable().OrderBy(a => a.ApplicationId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
