@@ -85,28 +85,28 @@ namespace UserService.Helper.Repository
             }
         }
 
-        public string GenerateSessionToken(SessionTokenGenerator sessionTokenGenerator, StringValues application)
+        public string GenerateAccessToken(AccessTokenGenerator accessTokenGenerator, StringValues application)
         {
             try
             {
-                if (sessionTokenGenerator == null)
+                if (accessTokenGenerator == null)
                     throw new ArgumentNullException(CommonMessage.TokenDataNull);
 
                 var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
                 var claimsData = new Claim[]
                 {
-                    new Claim("nme", string.IsNullOrEmpty(sessionTokenGenerator.Name) ? string.Empty : sessionTokenGenerator.Name.ToString()),
-                    new Claim("sub", string.IsNullOrEmpty(sessionTokenGenerator.UserId) ? string.Empty : sessionTokenGenerator.UserId.ToString()),
-                    new Claim("rol", JsonConvert.SerializeObject(sessionTokenGenerator.Roles)),
+                    new Claim("nme", string.IsNullOrEmpty(accessTokenGenerator.Name) ? string.Empty : accessTokenGenerator.Name.ToString()),
+                    new Claim("sub", string.IsNullOrEmpty(accessTokenGenerator.UserId) ? string.Empty : accessTokenGenerator.UserId.ToString()),
+                    new Claim("rol", JsonConvert.SerializeObject(accessTokenGenerator.Roles)),
                     application.ToString().ToLower() == "dashboard"
-                        ? new Claim("ins", string.IsNullOrEmpty(sessionTokenGenerator.InstitutionId) ? string.Empty : sessionTokenGenerator.InstitutionId.ToString()) 
+                        ? new Claim("ins", string.IsNullOrEmpty(accessTokenGenerator.InstitutionId) ? string.Empty : accessTokenGenerator.InstitutionId.ToString())
                         : null,
                 };
 
                 var tokenString = new JwtSecurityToken(
                                     issuer: _appSettings.SessionTokenIssuer,
                                     audience: GetAudience(application), // _appSettings.ValidAudience,
-                                    expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMinutes(15),
+                                    expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddMinutes(15),
                                     claims: claimsData,
                                     signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                                     );

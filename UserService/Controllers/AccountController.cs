@@ -51,14 +51,14 @@ namespace UserService.Controllers
 
         [HttpPost]
         [Route("authentications")]
-        public async Task<IActionResult> CreateSession(SigninModel signinModel)
+        public async Task<IActionResult> AuthenticateUser(SigninModel signinModel)
         {
             (Users user, string token) = (new Users(), "");
             try
             {
                 StringValues application;
                 Request.Headers.TryGetValue("Application", out application);
-                (user, token) = await _accountRepository.CreateSession(signinModel, application.FirstOrDefault());
+                (user, token) = await _accountRepository.AuthenticateUser(signinModel, application.FirstOrDefault());
                 _context.Users.Update(user);
                 _context.SaveChanges();
             }

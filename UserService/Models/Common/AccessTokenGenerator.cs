@@ -3,7 +3,7 @@ using UserService.Models.ResponseModel;
 
 namespace UserService.Models.Common
 {
-    public class SessionTokenGenerator
+    public class AccessTokenGenerator
     {
         public string UserId { get; set; }
         public string Name { get; set; }

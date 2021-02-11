@@ -361,7 +361,7 @@ namespace UserService.Repository
             return String.Join(",", institutionData.data.Select(x => x.InstitutionId));
         }
 
-        public async Task<(Users users, string token)> CreateSession(SigninModel signinModel, StringValues application)
+        public async Task<(Users users, string token)> AuthenticateUser(SigninModel signinModel, StringValues application)
         {
             string originalPassword = string.Empty;
 
@@ -376,14 +376,14 @@ namespace UserService.Repository
                 List<UserRoleForToken> usersRoles = GetUsersRoles(user);
                 string institutionIds = GetUsersInstitutions(user);
 
-                SessionTokenGenerator sessionTokenGenerator = new SessionTokenGenerator()
+                AccessTokenGenerator accessTokenGenerator = new AccessTokenGenerator()
                 {
                     Name = user.Name,
                     UserId = ObfuscationClass.EncodeId(user.UserId, _appSettings.Prime).ToString(),
                     Roles = usersRoles,
                     InstitutionId = institutionIds
                 };
-                string token = _helper.GenerateSessionToken(sessionTokenGenerator, application);
+                string token = _helper.GenerateAccessToken(accessTokenGenerator, application);
 
                 user.LastLoginDate = DateTime.Now;
                 return (user, token);
