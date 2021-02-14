@@ -105,7 +105,7 @@ namespace UserService.Helper.Repository
 
                 var tokenString = new JwtSecurityToken(
                                     issuer: _appSettings.SessionTokenIssuer,
-                                    audience: GetAudience(application), // _appSettings.ValidAudience,
+                                    audience: GetAudience(application),
                                     expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddMinutes(15),
                                     claims: claimsData,
                                     signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -122,15 +122,23 @@ namespace UserService.Helper.Repository
             }
         }
 
-        private string GetAudience(StringValues application)
+        public string GenerateRefreshToken(StringValues application, string accessToken)
         {
-            switch (application.ToString().ToLower())
+            var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
+            var claimsData = new Claim[]
             {
-                case "dashboard": return "https://dashboard.routesme.com";
-                case "app": return "https://app.routesme.com";
-                case "screen": return "https://screen.routesme.com";
-                default: return CommonMessage.UnknownApplication;
-            }
+                new Claim("sub", Guid.NewGuid().ToString()),
+                new Claim("stamp", ScrambleSignature(accessToken.Split('.').Last()))
+            };
+
+            var tokenString = new JwtSecurityToken(
+                                issuer: _appSettings.SessionTokenIssuer,
+                                audience: GetAudience(application),
+                                expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMonths(3),
+                                claims: claimsData,
+                                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                                );
+            return new JwtSecurityTokenHandler().WriteToken(tokenString);
         }
 
         public async Task<SendGrid.Response> SendConfirmationEmail(int userId, string email, string siteUrl)
@@ -199,6 +207,38 @@ namespace UserService.Helper.Repository
             catch (Exception ex)
             {
                 throw ex;
+            }
+        }
+
+        private static string Base64Encode(string plainText)
+        {
+            return Convert.ToBase64String(Encoding.GetEncoding("iso-8859-1").GetBytes(plainText));
+        }
+
+        private static string GenerateRandomString(int length)
+        {
+            Random random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private static string ScrambleSignature(string signature)
+        {
+            string enc =  Base64Encode(signature);
+            int index = enc[enc.Length - 3] % 7;
+            if (index == 0)
+                index = 7;
+            return enc.Insert(index, GenerateRandomString(index));
+        }
+
+        private string GetAudience(StringValues application)
+        {
+            switch (application.ToString().ToLower())
+            {
+                case "dashboard": return "https://dashboard.routesme.com";
+                case "app": return "https://app.routesme.com";
+                case "screen": return "https://screen.routesme.com";
+                default: return CommonMessage.UnknownApplication;
             }
         }
     }

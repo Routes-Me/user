@@ -53,13 +53,13 @@ namespace UserService.Controllers
         [Route("authentications")]
         public async Task<IActionResult> AuthenticateUser(SigninModel signinModel)
         {
-            (Users user, string token) = (new Users(), "");
+            AuthenticationResponse authenticationResponse = new AuthenticationResponse();
             try
             {
                 StringValues application;
                 Request.Headers.TryGetValue("Application", out application);
-                (user, token) = await _accountRepository.AuthenticateUser(signinModel, application.FirstOrDefault());
-                _context.Users.Update(user);
+                authenticationResponse = await _accountRepository.AuthenticateUser(signinModel, application.FirstOrDefault());
+                _context.Users.Update(authenticationResponse.user);
                 _context.SaveChanges();
             }
             catch (ArgumentNullException ex)
@@ -74,8 +74,14 @@ namespace UserService.Controllers
             SignInResponse response = new SignInResponse();
             response.message = CommonMessage.LoginSuccess;
             response.status = true;
-            response.token = token;
+            response.token = authenticationResponse.accessToken;
             response.statusCode = StatusCodes.Status200OK;
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true
+            };
+            Response.Cookies.Append("refreshToken", authenticationResponse.refreshToken, cookieOptions);
             return StatusCode((int)response.statusCode, response);
         }
 

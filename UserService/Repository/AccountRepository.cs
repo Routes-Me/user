@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UserService.Abstraction;
@@ -361,7 +362,7 @@ namespace UserService.Repository
             return String.Join(",", institutionData.data.Select(x => x.InstitutionId));
         }
 
-        public async Task<(Users users, string token)> AuthenticateUser(SigninModel signinModel, StringValues application)
+        public async Task<AuthenticationResponse> AuthenticateUser(SigninModel signinModel, StringValues application)
         {
             string originalPassword = string.Empty;
 
@@ -383,10 +384,17 @@ namespace UserService.Repository
                     Roles = usersRoles,
                     InstitutionId = institutionIds
                 };
-                string token = _helper.GenerateAccessToken(accessTokenGenerator, application);
+                string accessToken = _helper.GenerateAccessToken(accessTokenGenerator, application);
+
+                string refreshToken = _helper.GenerateRefreshToken(application, accessToken);
 
                 user.LastLoginDate = DateTime.Now;
-                return (user, token);
+                return new AuthenticationResponse()
+                {
+                    user = user,
+                    accessToken = accessToken,
+                    refreshToken = refreshToken
+                };
             }
             catch (Exception ex)
             {
@@ -408,7 +416,7 @@ namespace UserService.Repository
                 user = _context.Users.Where(x => x.UserId == UserId).FirstOrDefault();
                 if (user == null)
                         return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
-                
+
                 if (!string.IsNullOrEmpty(model.NewPassword))
                 {
                     originalPassword = await PasswordDecryptionAsync(model.NewPassword);

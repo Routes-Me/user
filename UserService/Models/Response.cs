@@ -84,6 +84,13 @@ namespace UserService.Models
         public LoginUser user { get; set; }
         public string Token { get; set; }
     }
+
+    public class AuthenticationResponse : Response
+    {
+        public Users user { get; set; }
+        public string accessToken { get; set; }
+        public string refreshToken { get; set; }
+    }
     #endregion
 
     #region User Response

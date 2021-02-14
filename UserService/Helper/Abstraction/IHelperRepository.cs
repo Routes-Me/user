@@ -13,6 +13,7 @@ namespace UserService.Helper.Abstraction
     {
         string GenerateToken(TokenGenerator user, StringValues Application);
         string GenerateAccessToken(AccessTokenGenerator accessTokenGenerator, StringValues application);
+        string GenerateRefreshToken(StringValues application, string accessToken);
         Task<SendGrid.Response> SendConfirmationEmail(int userId, string email, string siteUrl);
         Task<SendGrid.Response> VerifyEmail(string email, Users users);
     }
