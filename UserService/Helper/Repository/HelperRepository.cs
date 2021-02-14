@@ -92,7 +92,7 @@ namespace UserService.Helper.Repository
                 if (accessTokenGenerator == null)
                     throw new ArgumentNullException(CommonMessage.TokenDataNull);
 
-                var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
+                var key = Encoding.UTF8.GetBytes(_appSettings.AccessSecretKey);
                 var claimsData = new Claim[]
                 {
                     new Claim("nme", string.IsNullOrEmpty(accessTokenGenerator.Name) ? string.Empty : accessTokenGenerator.Name.ToString()),
@@ -124,7 +124,7 @@ namespace UserService.Helper.Repository
 
         public string GenerateRefreshToken(StringValues application, string accessToken)
         {
-            var key = Encoding.UTF8.GetBytes(_appSettings.Secret);
+            var key = Encoding.UTF8.GetBytes(_appSettings.RefreshSecretKey);
             var claimsData = new Claim[]
             {
                 new Claim("sub", Guid.NewGuid().ToString()),
