@@ -20,6 +20,7 @@ namespace UserService.Models
         public static string InvalidPasswordFormat = "Incorrect encrypted password string format.";
         public static string IncorrectUserRole = "Incorrect user role.";
         public static string LoginSuccess = "Login successfully.";
+        public static string RenewSuccess = "Tokens Renewed successfully.";
         public static string ExceptionMessage = "Something went wrong. Error Message - ";
         public static string PhoneNotExist = "Phone number does not exist in the system.";
         public static string PhoneRequired = "Phone number is required.";
@@ -72,6 +73,7 @@ namespace UserService.Models
         public static string ApplicationAssociatedWithUserRole = "Application associated with user role.";
         public static string UnknownApplication = "No Application is specified in request";
         public static string TokenDataNull = "Token data is null.";
-
+        public static string Unauthorized = "You are unauthorized to perform this operation.";
+        public static string Forbidden = "Forbidden";
     }
 }       

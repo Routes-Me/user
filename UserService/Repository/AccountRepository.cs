@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.IdentityModel.Tokens;
 using Obfuscation;
 using RestSharp;
 using System;
@@ -386,7 +387,7 @@ namespace UserService.Repository
                 };
                 string accessToken = _helper.GenerateAccessToken(accessTokenGenerator, application);
 
-                string refreshToken = _helper.GenerateRefreshToken(application, accessToken);
+                string refreshToken = _helper.GenerateRefreshToken(accessToken);
 
                 user.LastLoginDate = DateTime.Now;
                 return new AuthenticationResponse()
@@ -400,6 +401,13 @@ namespace UserService.Repository
             {
                 throw;
             }
+        }
+
+        public TokenRenewalResponse RenewTokens(string refreshToken, string accessToken)
+        {
+            if (!_helper.validateTokens(refreshToken, accessToken))
+                throw new UnauthorizedAccessException(CommonMessage.Unauthorized);
+            return _helper.RenewTokens(refreshToken, accessToken);
         }
 
         public async Task<dynamic> ChangePassword(ChangePasswordModel model)

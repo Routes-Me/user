@@ -122,23 +122,72 @@ namespace UserService.Helper.Repository
             }
         }
 
-        public string GenerateRefreshToken(StringValues application, string accessToken)
+        public string GenerateRefreshToken(string accessToken)
         {
+            JwtSecurityToken tokenData = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
+            // string application = get
             var key = Encoding.UTF8.GetBytes(_appSettings.RefreshSecretKey);
             var claimsData = new Claim[]
             {
                 new Claim("sub", Guid.NewGuid().ToString()),
-                new Claim("stamp", ScrambleSignature(accessToken.Split('.').Last()))
+                new Claim("stm", EncodeSignature(accessToken.Split('.').Last()))
             };
 
             var tokenString = new JwtSecurityToken(
-                                issuer: _appSettings.SessionTokenIssuer,
-                                audience: GetAudience(application),
-                                expires: application.ToString().ToLower() == "screen" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMonths(3),
-                                claims: claimsData,
-                                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                                );
+                issuer: _appSettings.SessionTokenIssuer,
+                audience: tokenData.Audiences.FirstOrDefault(),
+                expires: tokenData.Audiences.FirstOrDefault() == "https://screen.routesme.com" ? DateTime.UtcNow.AddMonths(6) : DateTime.UtcNow.AddMonths(3),
+                claims: claimsData,
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            );
             return new JwtSecurityTokenHandler().WriteToken(tokenString);
+        }
+
+        public bool validateTokens(string refreshToken, string accessToken)
+        {
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            if (!tokenHandler.CanReadToken(refreshToken) || !tokenHandler.CanReadToken(accessToken))
+                return false;
+
+            JwtSecurityToken accessTokenData = tokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+            JwtSecurityToken refreshTokenData = tokenHandler.ReadToken(refreshToken) as JwtSecurityToken;
+
+            if (accessTokenData.ValidTo > DateTime.UtcNow)
+                throw new SecurityTokenExpiredException(CommonMessage.Forbidden);
+
+            var stamp = refreshTokenData.Claims.First(c => c.Type == "stm").Value;
+
+            string accessTokenSignature = accessToken.Split('.').Last();
+            string decodedSignature = DecodeSignature(stamp);
+
+            if (accessTokenSignature.Equals(decodedSignature))
+                if (refreshTokenData.Issuer.Equals(_appSettings.SessionTokenIssuer))
+                    if (refreshTokenData.ValidTo > DateTime.UtcNow)
+                        return true;
+            return false;
+        }
+
+        public TokenRenewalResponse RenewTokens(string refreshToken, string accessToken)
+        {
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            JwtSecurityToken tokenData = tokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+
+            var key = Encoding.UTF8.GetBytes(_appSettings.AccessSecretKey);
+            var tokenString = new JwtSecurityToken(
+                issuer: _appSettings.SessionTokenIssuer,
+                audience: tokenData.Audiences.FirstOrDefault(),
+                expires: tokenData.Audiences.FirstOrDefault() == "https://screen.routesme.com" ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddMinutes(15),
+                claims: tokenData.Claims,
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            );
+            string newAccessToken = new JwtSecurityTokenHandler().WriteToken(tokenString);
+            string newRefreshToken = GenerateRefreshToken(newAccessToken);
+
+            return new TokenRenewalResponse()
+            {
+                accessToken = accessToken,
+                refreshToken = refreshToken
+            };
         }
 
         public async Task<SendGrid.Response> SendConfirmationEmail(int userId, string email, string siteUrl)
@@ -215,6 +264,11 @@ namespace UserService.Helper.Repository
             return Convert.ToBase64String(Encoding.GetEncoding("iso-8859-1").GetBytes(plainText));
         }
 
+        private static string Base64Decode(string encodedText)
+        {
+            return Encoding.GetEncoding("iso-8859-1").GetString(Convert.FromBase64String(encodedText));
+        }
+
         private static string GenerateRandomString(int length)
         {
             Random random = new Random();
@@ -222,13 +276,22 @@ namespace UserService.Helper.Repository
             return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        private static string ScrambleSignature(string signature)
+        private static string EncodeSignature(string signature)
         {
-            string enc =  Base64Encode(signature);
-            int index = enc[enc.Length - 3] % 7;
+            string encodedSignature =  Base64Encode(signature);
+            int index = encodedSignature[encodedSignature.Length - 3] % 7;
             if (index == 0)
                 index = 7;
-            return enc.Insert(index, GenerateRandomString(index));
+            return encodedSignature.Insert(index, GenerateRandomString(index));
+        }
+
+        private static string DecodeSignature(string signature)
+        {
+            int index = signature[signature.Length - 3] % 7;
+            if (index == 0)
+                index = 7;
+            var signatureWithoutRedunduncy = signature.Remove(index, index);
+            return Base64Decode(signatureWithoutRedunduncy);
         }
 
         private string GetAudience(StringValues application)

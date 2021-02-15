@@ -91,6 +91,12 @@ namespace UserService.Models
         public string accessToken { get; set; }
         public string refreshToken { get; set; }
     }
+
+    public class TokenRenewalResponse : Response
+    {
+        public string accessToken { get; set; }
+        public string refreshToken { get; set; }
+    }
     #endregion
 
     #region User Response

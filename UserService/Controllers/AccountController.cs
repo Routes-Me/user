@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Microsoft.IdentityModel.Tokens;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.ResponseModel;
@@ -82,6 +83,36 @@ namespace UserService.Controllers
                 Secure = true
             };
             Response.Cookies.Append("refreshToken", authenticationResponse.refreshToken, cookieOptions);
+            return StatusCode((int)response.statusCode, response);
+        }
+
+        [HttpPost]
+        [Route("authentications/renewals")]
+        public async Task<IActionResult> RenewTokens(TokenRenewModel tokenRenewModel)
+        {
+            TokenRenewalResponse response = new TokenRenewalResponse();
+            try
+            {
+                StringValues accessToken;
+                Request.Headers.TryGetValue("AccessToken", out accessToken);
+                response = _accountRepository.RenewTokens(tokenRenewModel.RefreshToken, accessToken);
+            }
+            catch (SecurityTokenExpiredException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                dynamic errorResponse = ReturnResponse.ExceptionResponse(ex);
+                return StatusCode((int)errorResponse.statusCode, errorResponse);
+            }
+            response.message = CommonMessage.RenewSuccess;
+            response.status = true;
+            response.statusCode = StatusCodes.Status200OK;
             return StatusCode((int)response.statusCode, response);
         }
 
