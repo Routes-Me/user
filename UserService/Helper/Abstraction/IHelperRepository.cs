@@ -19,6 +19,6 @@ namespace UserService.Helper.Abstraction
         bool validateTokens(string refreshToken, string accessToken);
         Task<SendGrid.Response> SendConfirmationEmail(int userId, string email, string siteUrl);
         Task<SendGrid.Response> VerifyEmail(string email, Users users);
-        TokenRenewalResponse RenewTokens(string refreshToken, string accessToken);
+        Task<TokenRenewalResponse> RenewTokens(string refreshToken, string accessToken);
     }
 }

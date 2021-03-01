@@ -88,32 +88,31 @@ namespace UserService.Controllers
 
         [HttpPost]
         [Route("authentications/renewals")]
-        public async Task<IActionResult> RenewTokens(TokenRenewModel tokenRenewModel)
+        public async Task<IActionResult> RenewTokens(RefreshTokenDto tokenRenewModel)
         {
             TokenRenewalResponse response = new TokenRenewalResponse();
             try
             {
                 StringValues accessToken;
                 Request.Headers.TryGetValue("AccessToken", out accessToken);
-                response = _accountRepository.RenewTokens(tokenRenewModel.RefreshToken, accessToken);
+                response = await _accountRepository.RenewTokens(tokenRenewModel.RefreshToken, accessToken);
             }
             catch (SecurityTokenExpiredException ex)
             {
                 return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (AccessViolationException ex)
             {
-                return StatusCode(StatusCodes.Status401Unauthorized, ex.Message);
+                return StatusCode(StatusCodes.Status406NotAcceptable, ex.Message);
             }
             catch (Exception ex)
             {
                 dynamic errorResponse = ReturnResponse.ExceptionResponse(ex);
-                return StatusCode((int)errorResponse.statusCode, errorResponse);
+                return StatusCode(errorResponse.statusCode, errorResponse);
             }
             response.message = CommonMessage.RenewSuccess;
             response.status = true;
-            response.statusCode = StatusCodes.Status200OK;
-            return StatusCode((int)response.statusCode, response);
+            return StatusCode(StatusCodes.Status200OK, response);
         }
 
         [HttpPut]

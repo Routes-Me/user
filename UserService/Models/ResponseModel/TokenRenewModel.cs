@@ -1,6 +1,6 @@
 namespace UserService.Models.ResponseModel
 {
-    public class TokenRenewModel
+    public class RefreshTokenDto
     {
         public string RefreshToken { get; set; }
     }

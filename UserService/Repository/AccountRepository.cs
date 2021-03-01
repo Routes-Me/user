@@ -403,11 +403,11 @@ namespace UserService.Repository
             }
         }
 
-        public TokenRenewalResponse RenewTokens(string refreshToken, string accessToken)
+        public async Task<TokenRenewalResponse> RenewTokens(string refreshToken, string accessToken)
         {
             if (!_helper.validateTokens(refreshToken, accessToken))
-                throw new UnauthorizedAccessException(CommonMessage.Unauthorized);
-            return _helper.RenewTokens(refreshToken, accessToken);
+                throw new AccessViolationException(CommonMessage.Unauthorized);
+            return await _helper.RenewTokens(refreshToken, accessToken);
         }
 
         public async Task<dynamic> ChangePassword(ChangePasswordModel model)

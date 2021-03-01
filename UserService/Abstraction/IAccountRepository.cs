@@ -11,7 +11,7 @@ namespace UserService.Abstraction
         Task<dynamic> SignUp(RegistrationModel model);
         Task<(ErrorResponse errorResponse, SignInResponse response)> SignIn(SigninModel model, StringValues Application);
         Task<AuthenticationResponse> AuthenticateUser(SigninModel signinModel, StringValues application);
-        TokenRenewalResponse RenewTokens(string refreshToken, string accessToken);
+        Task<TokenRenewalResponse> RenewTokens(string refreshToken, string accessToken);
         Task<dynamic> ChangePassword(ChangePasswordModel model);
         Task<dynamic> ForgotPassword(string email);
     }

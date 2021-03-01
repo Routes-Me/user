@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace UserService.Models.Common
+﻿namespace UserService.Models.Common
 {
     public class Dependencies
     {
@@ -12,6 +7,7 @@ namespace UserService.Models.Common
         public string InstitutionsUrl { get; set; }
         public string OfficersUrl { get; set; }
         public string GetInstitutionUrl { get; set; }
+        public string RevokeRefreshTokenUrl { get; set; }
     }
 }
         

@@ -2,20 +2,16 @@
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Obfuscation;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
-using System.Security.Principal;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
+using RestSharp;
 using UserService.Helper.Abstraction;
 using UserService.Models.Common;
 using UserService.Models;
@@ -29,10 +25,12 @@ namespace UserService.Helper.Repository
         private readonly AppSettings _appSettings;
         private readonly SendGridSettings _sendGridSettings;
         private readonly userserviceContext _context;
+        private readonly Dependencies _dependencies;
 
-        public HelperRepository(IOptions<AppSettings> appSettings, IOptions<SendGridSettings> sendGridSettings, userserviceContext context)
+        public HelperRepository(IOptions<AppSettings> appSettings, IOptions<Dependencies> dependencies, IOptions<SendGridSettings> sendGridSettings, userserviceContext context)
         {
             _appSettings = appSettings.Value;
+            _dependencies = dependencies.Value;
             _sendGridSettings = sendGridSettings.Value;
             _context = context;
         }
@@ -77,6 +75,7 @@ namespace UserService.Helper.Repository
                                        );
                     token = new JwtSecurityTokenHandler().WriteToken(tokenString);
                 }
+
                 return token;
             }
             catch (Exception ex)
@@ -125,11 +124,11 @@ namespace UserService.Helper.Repository
         public string GenerateRefreshToken(string accessToken)
         {
             JwtSecurityToken tokenData = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
-            // string application = get
             var key = Encoding.UTF8.GetBytes(_appSettings.RefreshSecretKey);
             var claimsData = new Claim[]
             {
-                new Claim("sub", Guid.NewGuid().ToString()),
+                new Claim("sub", tokenData.Claims.First(c => c.Type == "sub").Value),
+                new Claim("ref", DateTimeOffset.Now.ToUnixTimeMilliseconds()+(new Random().Next(5000, 9999)).ToString()),
                 new Claim("stm", EncodeSignature(accessToken.Split('.').Last()))
             };
 
@@ -155,38 +154,37 @@ namespace UserService.Helper.Repository
             if (accessTokenData.ValidTo > DateTime.UtcNow)
                 throw new SecurityTokenExpiredException(CommonMessage.Forbidden);
 
-            var stamp = refreshTokenData.Claims.First(c => c.Type == "stm").Value;
-
-            string accessTokenSignature = accessToken.Split('.').Last();
+            string stamp = refreshTokenData.Claims.First(c => c.Type == "stm").Value;
             string decodedSignature = DecodeSignature(stamp);
 
-            if (accessTokenSignature.Equals(decodedSignature))
-                if (refreshTokenData.Issuer.Equals(_appSettings.SessionTokenIssuer))
-                    if (refreshTokenData.ValidTo > DateTime.UtcNow)
-                        return true;
+            string accessTokenSignature = accessToken.Split('.').Last();
+
+            if (accessTokenSignature.Equals(decodedSignature) && refreshTokenData.ValidTo > DateTime.UtcNow && refreshTokenData.Issuer.Equals(_appSettings.SessionTokenIssuer))
+                return true;
             return false;
         }
 
-        public TokenRenewalResponse RenewTokens(string refreshToken, string accessToken)
+        public async Task<TokenRenewalResponse> RenewTokens(string refreshToken, string accessToken)
         {
-            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-            JwtSecurityToken tokenData = tokenHandler.ReadToken(accessToken) as JwtSecurityToken;
+            JwtSecurityToken tokenData = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
 
             var key = Encoding.UTF8.GetBytes(_appSettings.AccessSecretKey);
-            var tokenString = new JwtSecurityToken(
+            string newAccessToken = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
                 issuer: _appSettings.SessionTokenIssuer,
                 audience: tokenData.Audiences.FirstOrDefault(),
                 expires: tokenData.Audiences.FirstOrDefault() == "https://screen.routesme.com" ? DateTime.UtcNow.AddMonths(1) : DateTime.UtcNow.AddMinutes(15),
                 claims: tokenData.Claims,
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            );
-            string newAccessToken = new JwtSecurityTokenHandler().WriteToken(tokenString);
+            ));
+
+            RefreshTokenDto refreshTokenDto = new RefreshTokenDto(){ RefreshToken = refreshToken };
+            await PostAPI(_dependencies.RevokeRefreshTokenUrl, refreshTokenDto);
             string newRefreshToken = GenerateRefreshToken(newAccessToken);
 
             return new TokenRenewalResponse()
             {
-                accessToken = accessToken,
-                refreshToken = refreshToken
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken
             };
         }
 
@@ -303,6 +301,17 @@ namespace UserService.Helper.Repository
                 case "screen": return "https://screen.routesme.com";
                 default: return CommonMessage.UnknownApplication;
             }
+        }
+
+        private async Task PostAPI(string url, dynamic objectToSend)
+        {
+            var client = new RestClient(_appSettings.Host + url);
+            var request = new RestRequest(Method.POST);
+            string jsonToSend = JsonConvert.SerializeObject(objectToSend);
+            request.AddParameter("application/json; charset=utf-8", jsonToSend, ParameterType.RequestBody);
+            request.RequestFormat = DataFormat.Json;
+            IRestResponse response = client.Execute(request);
+            await Task.CompletedTask;
         }
     }
 }
