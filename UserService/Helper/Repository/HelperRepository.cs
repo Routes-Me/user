@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Net;
 using System.Threading.Tasks;
 using RestSharp;
 using UserService.Helper.Abstraction;
@@ -92,11 +93,14 @@ namespace UserService.Helper.Repository
                     throw new ArgumentNullException(CommonMessage.TokenDataNull);
 
                 var key = Encoding.UTF8.GetBytes(_appSettings.AccessSecretKey);
+                var tokenId = JsonConvert.DeserializeObject<IdentifierResponse>(GetAPI(_dependencies.GetIdentifierUrl).Content).Identifier.ToString();
+
                 var claimsData = new Claim[]
                 {
                     new Claim("nme", string.IsNullOrEmpty(accessTokenGenerator.Name) ? string.Empty : accessTokenGenerator.Name.ToString()),
                     new Claim("sub", string.IsNullOrEmpty(accessTokenGenerator.UserId) ? string.Empty : accessTokenGenerator.UserId.ToString()),
                     new Claim("rol", JsonConvert.SerializeObject(accessTokenGenerator.Roles)),
+                    new Claim("ref", tokenId),
                     application.ToString().ToLower() == "dashboard"
                         ? new Claim("ins", string.IsNullOrEmpty(accessTokenGenerator.InstitutionId) ? string.Empty : accessTokenGenerator.InstitutionId.ToString())
                         : null,
@@ -125,10 +129,11 @@ namespace UserService.Helper.Repository
         {
             JwtSecurityToken tokenData = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
             var key = Encoding.UTF8.GetBytes(_appSettings.RefreshSecretKey);
+            var tokenId = JsonConvert.DeserializeObject<IdentifierResponse>(GetAPI(_dependencies.GetIdentifierUrl).Content).Identifier.ToString();
             var claimsData = new Claim[]
             {
                 new Claim("sub", tokenData.Claims.First(c => c.Type == "sub").Value),
-                new Claim("ref", DateTimeOffset.Now.ToUnixTimeMilliseconds()+(new Random().Next(5000, 9999)).ToString()),
+                new Claim("ref", tokenId),
                 new Claim("stm", EncodeSignature(accessToken.Split('.').Last()))
             };
 
@@ -312,6 +317,18 @@ namespace UserService.Helper.Repository
             request.RequestFormat = DataFormat.Json;
             IRestResponse response = client.Execute(request);
             await Task.CompletedTask;
+        }
+
+        private dynamic GetAPI(string url)
+        {
+            var client = new RestClient(_appSettings.Host + url);
+            var request = new RestRequest(Method.GET);
+            IRestResponse response = client.Execute(request);
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                throw new HttpListenerException(400, CommonMessage.GetTokenIdFailed);
+
+            return response;
         }
     }
 }

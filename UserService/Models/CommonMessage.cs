@@ -75,5 +75,6 @@ namespace UserService.Models
         public static string TokenDataNull = "Token data is null.";
         public static string Unauthorized = "You are unauthorized to perform this operation.";
         public static string Forbidden = "Forbidden";
+        public static string GetTokenIdFailed = "Failed to get token identifier";
     }
 }       

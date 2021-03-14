@@ -7,6 +7,7 @@
         public string InstitutionsUrl { get; set; }
         public string OfficersUrl { get; set; }
         public string GetInstitutionUrl { get; set; }
+        public string GetIdentifierUrl { get; set; }
         public string RevokeRefreshTokenUrl { get; set; }
     }
 }

@@ -111,7 +111,6 @@ namespace UserService.Controllers
                 return StatusCode(errorResponse.statusCode, errorResponse);
             }
             response.message = CommonMessage.RenewSuccess;
-            response.status = true;
             return StatusCode(StatusCodes.Status200OK, response);
         }
 

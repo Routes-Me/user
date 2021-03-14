@@ -92,10 +92,11 @@ namespace UserService.Models
         public string refreshToken { get; set; }
     }
 
-    public class TokenRenewalResponse : Response
+    public class TokenRenewalResponse
     {
         public string accessToken { get; set; }
         public string refreshToken { get; set; }
+        public string message { get; set; }
     }
     #endregion
 
@@ -193,6 +194,11 @@ namespace UserService.Models
     {
         public Pagination pagination { get; set; }
         public List<InstitutionsModel> data { get; set; }
+    }
+
+    public class IdentifierResponse
+    {
+        public long Identifier { get; set; }
     }
 
 }
