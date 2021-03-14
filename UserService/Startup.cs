@@ -13,8 +13,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using UserService.Abstraction;
-using UserService.Helper.Abstraction;
-using UserService.Helper.Repository;
 using UserService.Models.Common;
 using UserService.Models.DBModels;
 using UserService.Repository;
@@ -45,24 +43,13 @@ namespace UserService
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             });
 
-            services.AddDbContext<userserviceContext>(options =>
+            services.AddDbContext<UsersServiceContext>(options =>
             {
                 options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            services.Configure<SendGridSettings>(Configuration.GetSection("SendGridSettings"));
-            services.AddScoped<IRolesRepository, UserRolesRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddScoped<IHelperRepository, HelperRepository>();
-            services.AddScoped<IPasswordHasherRepository, PasswordHasherRepository>();
-            services.AddScoped<IVerificationRepository, VerificationRepository>();
-            services.AddScoped<IAccountRepository, AccountRepository>();
-            services.AddScoped<IPrivilegesRepository, PrivilegesRepository>();
-            services.AddScoped<IApplicationRepository, ApplicationRepository>();
-            services.AddScoped<IUserIncludedRepository, UserIncludedRepository>();
-            services.AddSingleton<ITwilioVerificationRepository>(new TwilioVerificationRepository(
-                Configuration.GetSection("Twilio").Get<Configuration.Twilio>()));
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);

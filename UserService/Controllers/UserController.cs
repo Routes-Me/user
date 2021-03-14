@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using UserService.Abstraction;
 using UserService.Models;
@@ -11,18 +11,17 @@ namespace UserService.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _usersRepository;
-        private static readonly HttpClient HttpClient = new HttpClient();
         public UserController(IUserRepository usersRepository)
         {
             _usersRepository = usersRepository;
         }
 
         [HttpGet]
-        [Route("users/{id=0}")]
+        [Route("users/{id?}")]
         public IActionResult Get(string id, string Include, [FromQuery] Pagination pageInfo)
         {
             dynamic response = _usersRepository.GetUser(id, pageInfo, Include);
-            return StatusCode((int)response.statusCode, response);
+            return StatusCode(response.statusCode, response);
         }
 
         [HttpDelete]
@@ -30,15 +29,15 @@ namespace UserService.Controllers
         public IActionResult delete(string id)
         {
             dynamic response = _usersRepository.DeleteUser(id);
-            return StatusCode((int)response.statusCode, response);
+            return StatusCode(response.statusCode, response);
         }
 
         [HttpPut]
         [Route("users")]
-        public IActionResult Put(RegistrationModel model)
+        public IActionResult Put(UsersDto usersDto)
         {
-            dynamic response = _usersRepository.UpdateUser(model);
-            return StatusCode((int)response.statusCode, response);
+            dynamic response = _usersRepository.UpdateUser(usersDto);
+            return StatusCode(response.statusCode, response);
         }
     }
 }

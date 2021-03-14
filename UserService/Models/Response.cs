@@ -3,8 +3,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
 
@@ -57,15 +55,6 @@ namespace UserService.Models
         public int code { get; set; }
     }
 
-    #region UserRoles Response
-    public class RolesResponse : Response { }
-    public class RolesGetResponse : Response
-    {
-        public Pagination pagination { get; set; }
-        public List<RolesModel> data { get; set; }
-    }
-    #endregion
-
     #region Login Response
 
     public class ErrorResponse
@@ -73,31 +62,6 @@ namespace UserService.Models
         public List<ErrorDetails> errors { get; set; }
     }
 
-    public class SignInResponse : Response
-    {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string token { get; set; }
-    }
-
-    public class QrSignInResponse : Response
-    {
-        public LoginUser user { get; set; }
-        public string Token { get; set; }
-    }
-
-    public class AuthenticationResponse : Response
-    {
-        public Users user { get; set; }
-        public string accessToken { get; set; }
-        public string refreshToken { get; set; }
-    }
-
-    public class TokenRenewalResponse
-    {
-        public string accessToken { get; set; }
-        public string refreshToken { get; set; }
-        public string message { get; set; }
-    }
     #endregion
 
     #region User Response
@@ -110,7 +74,7 @@ namespace UserService.Models
     public class UsersGetResponse : Response
     {
         public Pagination pagination { get; set; }
-        public List<UsersModel> data { get; set; }
+        public List<UsersDto> data { get; set; }
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public JObject included { get; set; }
     }
@@ -152,7 +116,7 @@ namespace UserService.Models
 
     public class OfficersIncluded
     {
-        public List<UsersModel> Users { get; set; }
+        public List<UsersDto> Users { get; set; }
         public List<Institutions> institutions { get; set; }
     }
 
@@ -163,18 +127,6 @@ namespace UserService.Models
         public DateTime? CreatedAt { get; set; }
         public string PhoneNumber { get; set; }
         public string CountryIso { get; set; }
-    }
-
-    public class PrivilegesResponse : Response
-    {
-        public Pagination pagination { get; set; }
-        public List<PrivilegesModel> data { get; set; }
-    }
-
-    public class ApplicationResponse : Response
-    {
-        public Pagination pagination { get; set; }
-        public List<ApplicationsModel> data { get; set; }
     }
 
     public class DriverGetResponse : Response
@@ -189,16 +141,4 @@ namespace UserService.Models
         public string UserId { get; set; }
         public string InstitutionId { get; set; }
     }
-
-    public class InstitutionsData
-    {
-        public Pagination pagination { get; set; }
-        public List<InstitutionsModel> data { get; set; }
-    }
-
-    public class IdentifierResponse
-    {
-        public long Identifier { get; set; }
-    }
-
 }
