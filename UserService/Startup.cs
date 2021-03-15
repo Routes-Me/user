@@ -55,9 +55,6 @@ namespace UserService
             services.Configure<AppSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AppSettings>();
 
-            var dependenciessSection = Configuration.GetSection("Dependencies");
-            services.Configure<Dependencies>(dependenciessSection);
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

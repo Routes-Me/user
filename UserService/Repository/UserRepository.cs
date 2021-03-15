@@ -18,12 +18,10 @@ namespace UserService.Repository
     {
         private readonly UsersServiceContext _context;
         private readonly AppSettings _appSettings;
-        private readonly Dependencies _dependencies;
-        public UserRepository(IOptions<AppSettings> appSettings, UsersServiceContext context, IOptions<Dependencies> dependencies)
+        public UserRepository(IOptions<AppSettings> appSettings, UsersServiceContext context)
         {
             _appSettings = appSettings.Value;
             _context = context;
-            _dependencies = dependencies.Value;
         }
 
         public dynamic DeleteUser(string id)
