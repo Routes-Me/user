@@ -1,7 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using Obfuscation;
 using UserService.Abstraction;
 using UserService.Models;
+using UserService.Models.DBModels;
+using UserService.Models.Common;
 using UserService.Models.ResponseModel;
 
 namespace UserService.Controllers
@@ -11,9 +17,13 @@ namespace UserService.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _usersRepository;
-        public UserController(IUserRepository usersRepository)
+        private readonly UsersServiceContext _context;
+        private readonly AppSettings _appSettings;
+        public UserController(IUserRepository usersRepository, UsersServiceContext context, IOptions<AppSettings> appSettings)
         {
             _usersRepository = usersRepository;
+            _context = context;
+            _appSettings = appSettings.Value;
         }
 
         [HttpGet]
@@ -38,6 +48,34 @@ namespace UserService.Controllers
         {
             dynamic response = _usersRepository.UpdateUser(usersDto);
             return StatusCode(response.statusCode, response);
+        }
+
+        [HttpPost]
+        [Route("users")]
+        public async Task<IActionResult> PostUser(UsersDto usersDto)
+        {
+            PostUserResponse response = new PostUserResponse();
+            try
+            {
+                Users user = _usersRepository.PostUser(usersDto);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                response.UserId = ObfuscationClass.DecodeId(Convert.ToInt32(user.UserId), _appSettings.PrimeInverse).ToString();
+            }
+            catch (ArgumentNullException ex)
+            {
+                return StatusCode(StatusCodes.Status422UnprocessableEntity, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
+            }
+            response.Message = CommonMessage.UserInsert;
+            return StatusCode(StatusCodes.Status201Created, response);
         }
     }
 }

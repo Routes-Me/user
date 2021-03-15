@@ -1,17 +1,11 @@
-﻿using Encryption;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Obfuscation;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.Common;
@@ -64,7 +58,7 @@ namespace UserService.Repository
                 if (user == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
 
-                if (!string.IsNullOrEmpty(usersDto.Phone))
+                if (!string.IsNullOrEmpty(usersDto.PhoneNumber))
                 {
                     var userPhone = user.Phones.Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
                     if (userPhone == null)
@@ -72,14 +66,14 @@ namespace UserService.Repository
                         Phones newPhone = new Phones()
                         {
                             IsVerified = false,
-                            Number = usersDto.Phone,
+                            Number = usersDto.PhoneNumber,
                             UserId = userIdDecrypted
                         };
                         _context.Phones.Add(newPhone);
                     }
                     else
                     {
-                        userPhone.Number = usersDto.Phone;
+                        userPhone.Number = usersDto.PhoneNumber;
                         userPhone.IsVerified = false;
                         _context.Phones.Update(userPhone);
                     }
@@ -112,7 +106,7 @@ namespace UserService.Repository
                     {
                         UsersDto usersModel = new UsersDto();
                         usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
-                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
+                        usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
                         usersModelList.Add(usersModel);
@@ -128,7 +122,7 @@ namespace UserService.Repository
                     {
                         UsersDto usersModel = new UsersDto();
                         usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
-                        usersModel.Phone = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
+                        usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
                         usersModelList.Add(usersModel);
@@ -161,6 +155,26 @@ namespace UserService.Repository
             {
                 return ReturnResponse.ExceptionResponse(ex);
             }
+        }
+
+        public dynamic PostUser(UsersDto usersDto)
+        {
+            if (usersDto == null)
+                throw new ArgumentNullException(CommonMessage.InvalidData);
+
+            if (_context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
+                throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
+
+            return new Users
+            {
+                Name = usersDto.Name,
+                Phones = new List<Phones>
+                {
+                    new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
+                },
+                CreatedAt = DateTime.Now,
+                IsEmailVerified = false
+            };
         }
     }
 }

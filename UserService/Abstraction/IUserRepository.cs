@@ -9,5 +9,6 @@ namespace UserService.Abstraction
         dynamic DeleteUser(string id);
         dynamic UpdateUser(UsersDto usersDto);
         dynamic GetUser(string userId, Pagination pageInfo, string includeType);
+        dynamic PostUser(UsersDto usersDto);
     }
 }
