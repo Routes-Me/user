@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using Obfuscation;
+using RoutesSecurity;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.DBModels;
@@ -60,7 +60,7 @@ namespace UserService.Controllers
                 Users user = _usersRepository.PostUser(usersDto);
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-                response.UserId = ObfuscationClass.DecodeId(Convert.ToInt32(user.UserId), _appSettings.PrimeInverse).ToString();
+                response.UserId = Obfuscation.Encode(user.UserId);
             }
             catch (ArgumentNullException ex)
             {

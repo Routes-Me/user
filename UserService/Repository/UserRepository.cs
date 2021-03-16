@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
-using Obfuscation;
+using RoutesSecurity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(id), _appSettings.PrimeInverse);
+                var userIdDecrypted = Obfuscation.Decode(id);
                 var users = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
                 if (users == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
@@ -47,7 +47,7 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(usersDto.UserId), _appSettings.PrimeInverse);
+                var userIdDecrypted = Obfuscation.Decode(usersDto.UserId);
                 List<RolesModel> roles = new List<RolesModel>();
                 if (usersDto == null)
                     return ReturnResponse.ErrorResponse(CommonMessage.InvalidData, StatusCodes.Status400BadRequest);
@@ -93,7 +93,7 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = ObfuscationClass.DecodeId(Convert.ToInt32(userId), _appSettings.PrimeInverse);
+                var userIdDecrypted = Obfuscation.Decode(userId);
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersDto> usersModelList = new List<UsersDto>();
@@ -103,7 +103,7 @@ namespace UserService.Repository
                     foreach (var item in usersData)
                     {
                         UsersDto usersModel = new UsersDto();
-                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
+                        usersModel.UserId = Obfuscation.Encode(item.UserId);
                         usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
@@ -119,7 +119,7 @@ namespace UserService.Repository
                     foreach (var item in usersData)
                     {
                         UsersDto usersModel = new UsersDto();
-                        usersModel.UserId = ObfuscationClass.EncodeId(item.UserId, _appSettings.Prime).ToString();
+                        usersModel.UserId = Obfuscation.Encode(item.UserId);
                         usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
