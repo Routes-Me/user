@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace UserService.Models.DBModels
+﻿namespace UserService.Models.DBModels
 {
     public partial class Phones
     {
