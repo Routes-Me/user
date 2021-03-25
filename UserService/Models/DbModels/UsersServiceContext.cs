@@ -42,6 +42,7 @@ namespace UserService.Models.DBModels
 
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Phones)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("phones_ibfk_1");
             });

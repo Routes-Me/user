@@ -6,6 +6,7 @@
         public static string UserInsert = "User created successfully.";
         public static string ExceptionMessage = "Something went wrong. Error Message - ";
         public static string UserNotFound = "User not found.";
+        public static string UserIdRequired = "User Id is required.";
         public static string UserDelete = "User deleted successfully.";
         public static string UserUpdate = "User updated successfully.";
         public static string UserRetrived = "User retrived successfully.";

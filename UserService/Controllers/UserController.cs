@@ -35,11 +35,28 @@ namespace UserService.Controllers
         }
 
         [HttpDelete]
-        [Route("users/{id}")]
-        public IActionResult delete(string id)
+        [Route("users/{userId}")]
+        public IActionResult delete(string userId)
         {
-            dynamic response = _usersRepository.DeleteUser(id);
-            return StatusCode(response.statusCode, response);
+            try
+            {
+                Users user = _usersRepository.DeleteUser(userId);
+                _context.Users.Remove(user);
+                _context.SaveChanges();
+            }
+            catch (ArgumentNullException ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
+            }
+            return StatusCode(StatusCodes.Status200OK);
         }
 
         [HttpPut]
