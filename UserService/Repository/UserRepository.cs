@@ -24,23 +24,17 @@ namespace UserService.Repository
             _context = context;
         }
 
-        public dynamic DeleteUser(string id)
+        public dynamic DeleteUser(string userId)
         {
-            try
-            {
-                var userIdDecrypted = Obfuscation.Decode(id);
-                var users = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
-                if (users == null)
-                    return ReturnResponse.ErrorResponse(CommonMessage.UserNotFound, StatusCodes.Status404NotFound);
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(CommonMessage.UserIdRequired);
 
-                _context.Users.Remove(users);
-                _context.SaveChanges();
-                return ReturnResponse.SuccessResponse(CommonMessage.UserDelete, false);
-            }
-            catch (Exception ex)
-            {
-                return ReturnResponse.ExceptionResponse(ex);
-            }
+            int userIdDecrypted = Obfuscation.Decode(userId);
+            Users user = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted).FirstOrDefault();
+            if (user == null)
+                throw new ArgumentException(CommonMessage.UserNotFound);
+
+            return user;
         }
 
         public dynamic UpdateUser(UsersDto usersDto)

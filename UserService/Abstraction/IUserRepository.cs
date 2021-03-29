@@ -6,7 +6,7 @@ namespace UserService.Abstraction
 {
     public interface IUserRepository
     {
-        dynamic DeleteUser(string id);
+        dynamic DeleteUser(string userId);
         dynamic UpdateUser(UsersDto usersDto);
         dynamic GetUser(string userId, Pagination pageInfo, string includeType);
         dynamic PostUser(UsersDto usersDto);
