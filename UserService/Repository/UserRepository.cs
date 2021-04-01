@@ -87,11 +87,10 @@ namespace UserService.Repository
         {
             try
             {
-                var userIdDecrypted = Obfuscation.Decode(userId);
                 int totalCount = 0;
                 UsersGetResponse response = new UsersGetResponse();
                 List<UsersDto> usersModelList = new List<UsersDto>();
-                if (userIdDecrypted == 0)
+                if (string.IsNullOrEmpty(userId))
                 {
                     var usersData = _context.Users.Include(x => x.Phones).AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
                     foreach (var item in usersData)
@@ -107,6 +106,7 @@ namespace UserService.Repository
                 }
                 else
                 {
+                    var userIdDecrypted = Obfuscation.Decode(userId);
                     var usersData = _context.Users.Include(x => x.Phones).Where(x => x.UserId == userIdDecrypted)
                         .AsEnumerable().ToList().GroupBy(p => p.UserId).Select(g => g.First()).ToList().OrderBy(a => a.UserId).Skip((pageInfo.offset - 1) * pageInfo.limit).Take(pageInfo.limit).ToList();
 
