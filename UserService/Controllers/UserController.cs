@@ -12,8 +12,9 @@ using UserService.Models.ResponseModel;
 
 namespace UserService.Controllers
 {
-    [Route("api")]
     [ApiController]
+    [ApiVersion( "1.0" )]
+    [Route("v{version:apiVersion}/")]
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _usersRepository;
