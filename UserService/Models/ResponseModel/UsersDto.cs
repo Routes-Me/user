@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace UserService.Models.ResponseModel
 {
-    public class PrivilegesModel
+    public class UsersDto
     {
-        public string PrivilegeId { get; set; }
+        public string UserId { get; set; }
         public string Name { get; set; }
+        public string PhoneNumber { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
 }
