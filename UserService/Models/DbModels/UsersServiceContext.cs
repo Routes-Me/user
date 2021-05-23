@@ -70,7 +70,7 @@ namespace UserService.Models.DBModels
 
                 entity.Property(e => e.Email)
                     .HasColumnName("email")
-                    .HasColumnType("varchar(50)")
+                    .HasColumnType("varchar(40)")
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
             });
