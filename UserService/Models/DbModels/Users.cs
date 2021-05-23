@@ -7,6 +7,7 @@ namespace UserService.Models.DBModels
     {
         public int UserId { get; set; }
         public string Name { get; set; }
+        public string Email { get; set; }
         public DateTime? CreatedAt { get; set; }
         public bool? IsEmailVerified { get; set; }
 
