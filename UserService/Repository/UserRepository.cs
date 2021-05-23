@@ -72,6 +72,7 @@ namespace UserService.Repository
                 }
 
                 user.Name = usersDto.Name;
+                user.Email = usersDto.Email;
                 _context.Users.Update(user);
                 _context.SaveChanges();
 
@@ -100,6 +101,7 @@ namespace UserService.Repository
                         usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
+                        usersModel.Email = item.Email;
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.ToList().Count();
@@ -117,6 +119,7 @@ namespace UserService.Repository
                         usersModel.PhoneNumber = item.Phones.Where(x => x.UserId == item.UserId).Select(x => x.Number).FirstOrDefault();
                         usersModel.CreatedAt = item.CreatedAt;
                         usersModel.Name = item.Name;
+                        usersModel.Email = item.Email;
                         usersModelList.Add(usersModel);
                     }
                     totalCount = _context.Users.Where(x => x.UserId == userIdDecrypted).ToList().Count();
@@ -160,6 +163,7 @@ namespace UserService.Repository
             return new Users
             {
                 Name = usersDto.Name,
+                Email = usersDto.Email,
                 Phones = new List<Phones>
                 {
                     new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
