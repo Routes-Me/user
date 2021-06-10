@@ -157,7 +157,7 @@ namespace UserService.Repository
             if (usersDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            if (_context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
+            if (!string.IsNullOrEmpty(usersDto.PhoneNumber) && _context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
                 throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
 
             return new Users
