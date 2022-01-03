@@ -9,6 +9,7 @@ using UserService.Models;
 using UserService.Models.DBModels;
 using UserService.Models.Common;
 using UserService.Models.ResponseModel;
+using System.Linq;
 
 namespace UserService.Controllers
 {
@@ -95,5 +96,16 @@ namespace UserService.Controllers
             response.Message = CommonMessage.UserInsert;
             return StatusCode(StatusCodes.Status201Created, response);
         }
+
+        [HttpGet]
+        [Route("users/number/{number}")]
+        public IActionResult CheckPhoneExistance(string number)
+        {
+            if (!string.IsNullOrEmpty(number) && _context.Phones.Where(p => p.Number == number).FirstOrDefault() != null)
+                return StatusCode(StatusCodes.Status200OK);
+
+            return StatusCode(StatusCodes.Status404NotFound);
+        }
+
     }
 }
