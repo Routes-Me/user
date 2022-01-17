@@ -9,6 +9,7 @@ using System.Linq;
 using UserService.Abstraction;
 using UserService.Models;
 using UserService.Models.Common;
+using UserService.Models.DbModels;
 using UserService.Models.DBModels;
 using UserService.Models.ResponseModel;
 
@@ -160,6 +161,7 @@ namespace UserService.Repository
             if (!string.IsNullOrEmpty(usersDto.PhoneNumber) && _context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
                 throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
 
+
             return new Users
             {
                 Name = usersDto.Name,
@@ -172,5 +174,94 @@ namespace UserService.Repository
                 IsEmailVerified = false
             };
         }
+
+        public dynamic PostDevice(DeviceDto deviceDto)
+        {
+            if (deviceDto == null)
+                throw new ArgumentNullException(CommonMessage.InvalidData);
+
+            if(deviceDto.OS == "android" || deviceDto.OS == "Android")
+            {
+                if(_context.android_devices.Where(x => x.android_identifier == deviceDto.UniqueId).FirstOrDefault() != null)
+                    throw new ArgumentException(CommonMessage.AndroidDeviceExist);
+
+                return new Devices
+                {
+                    OS = deviceDto.OS,
+                    UserId = Obfuscation.Decode(deviceDto.UserId),
+                    android_devices = new android_devices
+                    {
+                        android_identifier = deviceDto.UniqueId,
+                        created_at = DateTime.Now
+
+                    },
+                    created_at = DateTime.Now
+                };
+            }
+            else
+            {
+                if (_context.iphone_devices.Where(x => x.ios_identifier == deviceDto.UniqueId).FirstOrDefault() != null)
+                    throw new ArgumentException(CommonMessage.IphoneDeviceExist);
+
+                return new Devices
+                {
+                    OS = deviceDto.OS,
+                    UserId = Obfuscation.Decode(deviceDto.UserId),
+                    iphone_devices = new iphone_devices
+                    {
+                        ios_identifier = deviceDto.UniqueId,
+                        created_at = DateTime.Now
+
+                    },
+                    created_at = DateTime.Now
+                };
+            }
+        }
+
+        public dynamic UpdateDevice(DeviceDto deviceDto)
+        {
+            var DeviceIdDecrypted = Obfuscation.Decode(deviceDto.DeviceId);
+
+            if (deviceDto == null)
+                throw new ArgumentNullException(CommonMessage.InvalidData);
+
+            var device = _context.registration_notifications.Where(x => x.DeviceId == DeviceIdDecrypted).FirstOrDefault();
+            if (device == null)
+            {
+                registration_notifications reg = new registration_notifications
+                {
+                    FcmToken = deviceDto.FcmToken,
+                    created_at = DateTime.Now,
+                    DeviceId = DeviceIdDecrypted
+                };
+
+                _context.registration_notifications.Add(reg);
+                _context.SaveChanges();
+
+                return ReturnResponse.SuccessResponse(CommonMessage.FCMTokenPosted, false);
+            }
+            else
+            {
+                device.FcmToken = deviceDto.FcmToken;
+                _context.registration_notifications.Update(device);
+                _context.SaveChanges();
+
+                return ReturnResponse.SuccessResponse(CommonMessage.FcmTokenUpdated, false);
+            }
+        }
+
+        public dynamic DeleteDevice(string deviceId)
+        {
+            if (string.IsNullOrEmpty(deviceId))
+                throw new ArgumentNullException(CommonMessage.DeviceIdRequired);
+
+            int deviceIdDecrypted = Obfuscation.Decode(deviceId);
+            Devices dev = _context.Devices.Where(x => x.DeviceId == deviceIdDecrypted).FirstOrDefault();
+            if (dev == null)
+                throw new ArgumentException(CommonMessage.DeviceNotFound);
+
+            return dev;
+        }
+
     }
 }

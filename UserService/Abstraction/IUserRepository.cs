@@ -10,5 +10,9 @@ namespace UserService.Abstraction
         dynamic UpdateUser(UsersDto usersDto);
         dynamic GetUser(string userId, Pagination pageInfo, string includeType);
         dynamic PostUser(UsersDto usersDto);
+        dynamic PostDevice(DeviceDto deviceDto);
+        dynamic UpdateDevice(DeviceDto deviceDto);
+        dynamic DeleteDevice(string deviceId);
+
     }
 }
