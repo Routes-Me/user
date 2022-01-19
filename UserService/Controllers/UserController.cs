@@ -174,7 +174,7 @@ namespace UserService.Controllers
         [Route("users/{number}/{uniqueid}/{os}")]
         public IActionResult VerifyNumber(string number, string uniqueid, string OS)
         {
-            if (string.Equals(OS , OsTypes.android.ToString()))
+            if (string.Equals(OS.ToLower() , OsTypes.android.ToString()))
             {
                 if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.AndroidDevices.AndroidIdentifier == uniqueid)))
                 {
@@ -182,7 +182,7 @@ namespace UserService.Controllers
                 }
             }
 
-            if (string.Equals(OS, OsTypes.ios.ToString()))
+            if (string.Equals(OS.ToLower() , OsTypes.ios.ToString()))
             {
                 if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.IphoneDevices.IosIdentifier == uniqueid)))
                 {
