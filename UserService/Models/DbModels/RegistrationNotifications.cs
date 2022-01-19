@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UserService.Models.DbModels
 {
-    public class registration_notifications
+    public class RegistrationNotifications
     { 
         [Key]
         public int RegisteredNotificationId { get; set; }
@@ -12,6 +12,6 @@ namespace UserService.Models.DbModels
         public int DeviceId { get; set; }
         public Devices Devices { get; set; }
         public string FcmToken { get; set; }
-        public DateTime? created_at { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

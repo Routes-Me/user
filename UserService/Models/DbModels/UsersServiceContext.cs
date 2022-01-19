@@ -14,9 +14,9 @@ namespace UserService.Models.DBModels
         {
         }
 
-        public virtual DbSet<registration_notifications> registration_notifications { get; set; }
-        public virtual DbSet<android_devices> android_devices { get; set; }
-        public virtual DbSet<iphone_devices> iphone_devices { get; set; }
+        public virtual DbSet<RegistrationNotifications> RegistrationNotifications { get; set; }
+        public virtual DbSet<AndroidDevices> AndroidDevices { get; set; }
+        public virtual DbSet<IphoneDevices> IphoneDevices { get; set; }
         public virtual DbSet<Phones> Phones { get; set; }
         public virtual DbSet<Devices> Devices { get; set; }
         public virtual DbSet<Users> Users { get; set; }
@@ -71,11 +71,19 @@ namespace UserService.Models.DBModels
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("devices_ibfk_1");
+
+                entity.Property(e => e.OS)
+                    .HasColumnName("os")
+                    .HasColumnType("enum('android','ios')")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_0900_ai_ci");
+
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             });
 
-            modelBuilder.Entity<iphone_devices>(entity =>
+            modelBuilder.Entity<IphoneDevices>(entity =>
             {
-                entity.HasKey(e => e.iphone_device_id)
+                entity.HasKey(e => e.IphoneDeviceId)
                     .HasName("PRIMARY");
 
                 entity.ToTable("iphone_devices");
@@ -85,11 +93,17 @@ namespace UserService.Models.DBModels
 
                 entity.Property(e => e.DeviceId).HasColumnName("device_id");
 
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
+                entity.Property(e => e.IosIdentifier).HasColumnName("ios_identifier");
+
+                entity.Property(e => e.IphoneDeviceId).HasColumnName("iphone_device_id");
+
             });
 
-            modelBuilder.Entity<android_devices>(entity =>
+            modelBuilder.Entity<AndroidDevices>(entity =>
             {
-                entity.HasKey(e => e.android_device_id)
+                entity.HasKey(e => e.AndroidDeviceId)
                     .HasName("PRIMARY");
 
                 entity.ToTable("android_devices");
@@ -97,12 +111,18 @@ namespace UserService.Models.DBModels
                 entity.HasIndex(e => e.DeviceId)
                     .HasName("device_id");
 
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
                 entity.Property(e => e.DeviceId).HasColumnName("device_id");
+
+                entity.Property(e => e.AndroidIdentifier).HasColumnName("android_identifier");
+
+                entity.Property(e => e.AndroidDeviceId).HasColumnName("android_device_id");
 
 
             });
 
-            modelBuilder.Entity<registration_notifications>(entity =>
+            modelBuilder.Entity<RegistrationNotifications>(entity =>
             {
                 entity.HasKey(e => e.RegisteredNotificationId)
                     .HasName("PRIMARY");
@@ -113,6 +133,10 @@ namespace UserService.Models.DBModels
                     .HasName("device_id");
 
                 entity.Property(e => e.DeviceId).HasColumnName("device_id");
+
+                entity.Property(e => e.FcmToken).HasColumnName("fcm_token");
+
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
 
                 entity.Property(e => e.RegisteredNotificationId).HasColumnName("regitered_notification_id");
 
@@ -147,100 +171,6 @@ namespace UserService.Models.DBModels
             });
 
             OnModelCreatingPartial(modelBuilder);
-
-            //modelBuilder.Entity<Users>().HasData(
-
-            //    new Users
-            //    {
-            //        UserId = 1,
-            //        Name = "User-1",
-            //        Email = "user1@email.com",
-            //        CreatedAt = System.DateTime.Now
-            //    },
-            //    new Users
-            //    {
-            //        UserId = 2,
-            //        Name = "User-2",
-            //        Email = "user2@email.com",
-            //        CreatedAt = System.DateTime.Now
-            //    },
-            //    new Users
-            //    {
-            //        UserId = 3,
-            //        Name = "User-3",
-            //        Email = "user3@email.com",
-            //        CreatedAt = System.DateTime.Now
-            //    },
-            //    new Users
-            //    {
-            //        UserId = 4,
-            //        Name = "User-4",
-            //        Email = "user4@email.com",
-            //        CreatedAt = System.DateTime.Now
-            //    },
-            //    new Users
-            //    {
-            //        UserId = 5,
-            //        Name = "User-5",
-            //        Email = "user5@email.com",
-            //        CreatedAt = System.DateTime.Now
-            //    }
-
-            //    );
-
-            //modelBuilder.Entity<Phones>().HasData(
-
-            //    new Phones
-            //    {
-            //        PhoneId = 1,
-            //        Number = "123456781",
-            //        UserId = 1
-            //    },
-            //    new Phones
-            //    {
-            //        PhoneId = 2,
-            //        Number = "123456782",
-            //        UserId = 2
-            //    },
-            //    new Phones
-            //    {
-            //        PhoneId = 3,
-            //        Number = "123456783",
-            //        UserId = 3
-            //    },
-            //    new Phones
-            //    {
-            //        PhoneId = 4,
-            //        Number = "123456784",
-            //        UserId = 4
-            //    },
-            //    new Phones
-            //    {
-            //        PhoneId = 5,
-            //        Number = "123456785",
-            //        UserId = 5
-            //    }
-
-            //    );
-
-            //modelBuilder.Entity<Devices>().HasData(
-
-            //    new Devices
-            //    {
-            //        DeviceId = 1,
-            //        UniqueId = "123456781",
-            //        os = "andriod",
-            //        UserId = 1
-            //    },
-            //    new Devices
-            //    {
-            //        DeviceId = 2,
-            //        UniqueId = "111222333",
-            //        os = "iphone",
-            //        UserId = 1
-            //    }
-
-            //    );
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

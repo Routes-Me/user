@@ -11,5 +11,14 @@
         public static string UserUpdate = "User updated successfully.";
         public static string UserRetrived = "User retrived successfully.";
         public static string PhoneAlreadyExists = "Phone number already exists.";
+        public static string DevicePosted = "Device Posted Successfuly";
+        public static string FcmTokenUpdated = "FCM Token Updated";
+        public static string FCMTokenPosted = "FCMTokenPosted";
+        public static string DeveiceDeleted = "Device Removed";
+        public static string DeviceNotFound = "Device not found";
+        public static string DeviceIdRequired = "Device Id Required";
+        public static string AndroidDeviceExist = "Android Device Already Exist";
+        public static string IphoneDeviceExist = "Iphone Device Already Exist";
+        public static string DeviceExist = "Device Already Exist";
     }
 }       

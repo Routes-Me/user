@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UserService.Models.DbModels
 {
-    public class iphone_devices
+    public class AndroidDevices
     {
         [Key]
-        public int iphone_device_id { get; set; }
-        public string ios_identifier { get; set; }
+        public int AndroidDeviceId { get; set; }
+        public string AndroidIdentifier { get; set; }
         [ForeignKey("Devices")]
         public int DeviceId { get; set; }
         public Devices Devices { get; set; }
-        public DateTime? created_at { get; set; }
+        public DateTime? CreatedAt { get; set; }
     }
 }

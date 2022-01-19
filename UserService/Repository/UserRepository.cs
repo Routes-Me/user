@@ -180,42 +180,35 @@ namespace UserService.Repository
             if (deviceDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            if(deviceDto.OS == "android" || deviceDto.OS == "Android")
+            if (_context.Devices.Where(x => x.AndroidDevices.AndroidIdentifier == deviceDto.UniqueId || x.IphoneDevices.IosIdentifier == deviceDto.UniqueId).FirstOrDefault() != null)
+                throw new ArgumentException(CommonMessage.DeviceExist);
+
+            Devices device = new Devices
             {
-                if(_context.android_devices.Where(x => x.android_identifier == deviceDto.UniqueId).FirstOrDefault() != null)
-                    throw new ArgumentException(CommonMessage.AndroidDeviceExist);
+                OS = deviceDto.OS,
+                UserId = Obfuscation.Decode(deviceDto.UserId),
+                CreatedAt = DateTime.Now,
+            };
 
-                return new Devices
+            if (deviceDto.OS == OsTypes.android)
+            {
+                device.AndroidDevices = new AndroidDevices()
                 {
-                    OS = deviceDto.OS,
-                    UserId = Obfuscation.Decode(deviceDto.UserId),
-                    android_devices = new android_devices
-                    {
-                        android_identifier = deviceDto.UniqueId,
-                        created_at = DateTime.Now
-
-                    },
-                    created_at = DateTime.Now
+                    AndroidIdentifier = deviceDto.UniqueId,
+                    CreatedAt = DateTime.Now,
                 };
             }
-            else
+
+            if(deviceDto.OS == OsTypes.ios)
             {
-                if (_context.iphone_devices.Where(x => x.ios_identifier == deviceDto.UniqueId).FirstOrDefault() != null)
-                    throw new ArgumentException(CommonMessage.IphoneDeviceExist);
-
-                return new Devices
+                device.IphoneDevices = new IphoneDevices()
                 {
-                    OS = deviceDto.OS,
-                    UserId = Obfuscation.Decode(deviceDto.UserId),
-                    iphone_devices = new iphone_devices
-                    {
-                        ios_identifier = deviceDto.UniqueId,
-                        created_at = DateTime.Now
-
-                    },
-                    created_at = DateTime.Now
+                    IosIdentifier = deviceDto.UniqueId,
+                    CreatedAt = DateTime.Now,
                 };
             }
+
+            return device;
         }
 
         public dynamic UpdateDevice(DeviceDto deviceDto)
@@ -225,17 +218,17 @@ namespace UserService.Repository
             if (deviceDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            var device = _context.registration_notifications.Where(x => x.DeviceId == DeviceIdDecrypted).FirstOrDefault();
+            var device = _context.RegistrationNotifications.Where(x => x.DeviceId == DeviceIdDecrypted).FirstOrDefault();
             if (device == null)
             {
-                registration_notifications reg = new registration_notifications
+                RegistrationNotifications reg = new RegistrationNotifications
                 {
                     FcmToken = deviceDto.FcmToken,
-                    created_at = DateTime.Now,
+                    CreatedAt = DateTime.Now,
                     DeviceId = DeviceIdDecrypted
                 };
 
-                _context.registration_notifications.Add(reg);
+                _context.RegistrationNotifications.Add(reg);
                 _context.SaveChanges();
 
                 return ReturnResponse.SuccessResponse(CommonMessage.FCMTokenPosted, false);
@@ -243,7 +236,7 @@ namespace UserService.Repository
             else
             {
                 device.FcmToken = deviceDto.FcmToken;
-                _context.registration_notifications.Update(device);
+                _context.RegistrationNotifications.Update(device);
                 _context.SaveChanges();
 
                 return ReturnResponse.SuccessResponse(CommonMessage.FcmTokenUpdated, false);
