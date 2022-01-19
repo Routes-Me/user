@@ -218,6 +218,9 @@ namespace UserService.Repository
             if (deviceDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
+            if (_context.Devices.Where(x => x.DeviceId == DeviceIdDecrypted).FirstOrDefault() == null)
+                throw new NullReferenceException(CommonMessage.DeviceNotFound);
+
             var device = _context.RegistrationNotifications.Where(x => x.DeviceId == DeviceIdDecrypted).FirstOrDefault();
             if (device == null)
             {
