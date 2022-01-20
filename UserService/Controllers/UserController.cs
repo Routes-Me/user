@@ -138,11 +138,12 @@ namespace UserService.Controllers
         }
 
         [HttpPut]
-        [Route("users/updatedevices")]
-        public IActionResult UpdateFcmToken(DeviceDto deviceDto)
+        [Route("users/updatedevices/{deviceId}")]
+        public IActionResult UpdateFcmToken(DeviceDto deviceDto , string deviceId)
         {
             try
             {
+                deviceDto.DeviceId = deviceId;
                 dynamic response = _usersRepository.UpdateDevice(deviceDto);
                 return StatusCode(response.statusCode, response);
             }
