@@ -99,26 +99,14 @@ namespace UserService.Controllers
             return StatusCode(StatusCodes.Status201Created, response);
         }
 
-        [HttpGet]
-        [Route("users/number/{number}")]
-        public IActionResult CheckPhoneExistance(string number)
-        {
-            if (!string.IsNullOrEmpty(number) && _context.Phones.Where(p => p.Number == number).FirstOrDefault() != null)
-                return StatusCode(StatusCodes.Status200OK);
-
-            return StatusCode(StatusCodes.Status404NotFound);
-        }
-
         [HttpPost]
         [Route("users/devices")]
-        public async Task<IActionResult> PostDevice(DeviceDto deviceDto)
+        public IActionResult PostDevice(DeviceDto deviceDto)
         {
             PostDeviceResponse response = new PostDeviceResponse();
             try
             {
                 Devices devices = _usersRepository.PostDevice(deviceDto);
-                _context.Devices.Add(devices);
-                await _context.SaveChangesAsync();
                 response.DeviceId = Obfuscation.Encode(devices.DeviceId);
             }
             catch (ArgumentNullException ex)
@@ -159,9 +147,7 @@ namespace UserService.Controllers
         {
             try
             {
-                Devices dev = _usersRepository.DeleteDevice(deviceId);
-                _context.Devices.Remove(dev);
-                _context.SaveChanges();
+                _usersRepository.DeleteDevice(deviceId);
             }
             catch (ArgumentNullException ex)
             {
@@ -184,7 +170,7 @@ namespace UserService.Controllers
         {
             if (string.Equals(OS.ToLower() , OsTypes.android.ToString()))
             {
-                if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.AndroidDevices.AndroidIdentifier == uniqueid)))
+                if (_usersRepository.DeviceExistance(number, uniqueid, "android"))
                 {
                     return Ok();
                 }
@@ -192,7 +178,7 @@ namespace UserService.Controllers
 
             if (string.Equals(OS, OsTypes.ios.ToString()))
             {
-                if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.IphoneDevices.IosIdentifier == uniqueid)))
+                if (_usersRepository.DeviceExistance(number , uniqueid , "ios"))
                 {
                     return Ok();
                 }

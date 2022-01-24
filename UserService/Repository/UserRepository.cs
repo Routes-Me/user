@@ -208,6 +208,9 @@ namespace UserService.Repository
                 };
             }
 
+            _context.Devices.Add(device);
+            _context.SaveChanges();
+
             return device;
         }
 
@@ -246,7 +249,7 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic DeleteDevice(string deviceId)
+        public void DeleteDevice(string deviceId)
         {
             if (string.IsNullOrEmpty(deviceId))
                 throw new ArgumentNullException(CommonMessage.DeviceIdRequired);
@@ -256,7 +259,30 @@ namespace UserService.Repository
             if (dev == null)
                 throw new ArgumentException(CommonMessage.DeviceNotFound);
 
-            return dev;
+            _context.Devices.Remove(dev);
+            _context.SaveChanges();
+        }
+
+        public bool DeviceExistance(string number, string uniqueid , string Os)
+        {
+            if(String.Equals(Os, "android"))
+            {
+                if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.AndroidDevices.AndroidIdentifier == uniqueid)))
+                {
+                    return true;
+                }
+            }
+
+            if (String.Equals(Os, "ios"))
+            {
+                if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.IphoneDevices.IosIdentifier == uniqueid)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+
         }
 
     }

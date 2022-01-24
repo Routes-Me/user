@@ -12,7 +12,8 @@ namespace UserService.Abstraction
         dynamic PostUser(UsersDto usersDto);
         dynamic PostDevice(DeviceDto deviceDto);
         dynamic UpdateDevice(DeviceDto deviceDto);
-        dynamic DeleteDevice(string deviceId);
+        void DeleteDevice(string deviceId);
+        bool DeviceExistance(string number, string uniqueid, string Os);
 
     }
 }
