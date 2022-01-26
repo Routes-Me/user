@@ -1,5 +1,6 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
+using UserService.Models.DbModels;
 
 namespace UserService.Models.DBModels
 {
@@ -12,5 +13,6 @@ namespace UserService.Models.DBModels
         public bool? IsEmailVerified { get; set; }
 
         public virtual ICollection<Phones> Phones { get; set; }
+        public virtual ICollection<Devices> Devices { get; set; }
     }
 }

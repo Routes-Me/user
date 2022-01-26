@@ -53,6 +53,12 @@ namespace UserService.Models
         public string UserId { get; set; }
     }
 
+    public class PostDeviceResponse
+    {
+        public string Message { get; set; }
+        public string DeviceId { get; set; }
+    }
+
     public class UsersGetResponse : Response
     {
         public Pagination pagination { get; set; }

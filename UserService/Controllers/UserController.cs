@@ -9,6 +9,9 @@ using UserService.Models;
 using UserService.Models.DBModels;
 using UserService.Models.Common;
 using UserService.Models.ResponseModel;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using UserService.Models.DbModels;
 
 namespace UserService.Controllers
 {
@@ -95,5 +98,94 @@ namespace UserService.Controllers
             response.Message = CommonMessage.UserInsert;
             return StatusCode(StatusCodes.Status201Created, response);
         }
+
+        [HttpPost]
+        [Route("users/devices")]
+        public IActionResult PostDevice(DeviceDto deviceDto)
+        {
+            PostDeviceResponse response = new PostDeviceResponse();
+            try
+            {
+                Devices devices = _usersRepository.PostDevice(deviceDto);
+                response.DeviceId = Obfuscation.Encode(devices.DeviceId);
+            }
+            catch (ArgumentNullException ex)
+            {
+                return StatusCode(StatusCodes.Status422UnprocessableEntity, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(StatusCodes.Status409Conflict, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
+            }
+            response.Message = CommonMessage.DevicePosted;
+            return StatusCode(StatusCodes.Status201Created, response);
+        }
+
+        [HttpPut]
+        [Route("users/updatedevices/{deviceId}")]
+        public IActionResult UpdateFcmToken(DeviceDto deviceDto , string deviceId)
+        {
+            try
+            {
+                deviceDto.DeviceId = deviceId;
+                dynamic response = _usersRepository.UpdateDevice(deviceDto);
+                return StatusCode(response.statusCode, response);
+            }
+            catch(Exception e)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + e.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("users/devices/{deviceId}")]
+        public IActionResult DeleteDevice(string deviceId)
+        {
+            try
+            {
+                _usersRepository.DeleteDevice(deviceId);
+            }
+            catch (ArgumentNullException ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
+            }
+            return StatusCode(StatusCodes.Status200OK);
+        }
+
+        [HttpGet]
+        [Route("users/{number}/{uniqueid}/{os}")]
+        public IActionResult VerifyNumber(string number, string uniqueid, string OS)
+        {
+            if (string.Equals(OS.ToLower() , OsTypes.android.ToString()))
+            {
+                if (_usersRepository.DeviceExistance(number, uniqueid, "android"))
+                {
+                    return Ok();
+                }
+            }
+
+            if (string.Equals(OS, OsTypes.ios.ToString()))
+            {
+                if (_usersRepository.DeviceExistance(number , uniqueid , "ios"))
+                {
+                    return Ok();
+                }
+            }
+
+            return NotFound();
+        }
+
     }
 }
