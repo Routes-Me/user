@@ -50,6 +50,7 @@ namespace UserService
             });
 
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IDeviceRepository, DeviceRepository>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");

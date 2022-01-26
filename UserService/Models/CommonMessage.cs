@@ -20,5 +20,6 @@
         public static string AndroidDeviceExist = "Android Device Already Exist";
         public static string IphoneDeviceExist = "Iphone Device Already Exist";
         public static string DeviceExist = "Device Already Exist";
+        public static string InvalidToken = "Invalid Token";
     }
 }       
