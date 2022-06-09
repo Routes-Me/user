@@ -158,8 +158,15 @@ namespace UserService.Repository
             if (usersDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            if (!string.IsNullOrEmpty(usersDto.PhoneNumber) && _context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
-                throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
+            if (!string.IsNullOrEmpty(usersDto.PhoneNumber))
+            {
+                if (_context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
+                {
+                    Users users = _context.Users.Include(x=>x.Phones).Where(x=>x.Phones.FirstOrDefault().Number == usersDto.PhoneNumber).FirstOrDefault();
+                    return users;
+                }
+            }
+            
 
 
             return new Users

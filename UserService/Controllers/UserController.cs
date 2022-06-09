@@ -16,7 +16,7 @@ using UserService.Models.DbModels;
 namespace UserService.Controllers
 {
     [ApiController]
-    [ApiVersion( "1.0" )]
+    [ApiVersion("1.0")]
     [Route("v{version:apiVersion}/")]
     public class UserController : ControllerBase
     {
@@ -79,9 +79,13 @@ namespace UserService.Controllers
             try
             {
                 Users user = _usersRepository.PostUser(usersDto);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                if (user.UserId == 0)
+                {
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                }
                 response.UserId = Obfuscation.Encode(user.UserId);
+
             }
             catch (ArgumentNullException ex)
             {
