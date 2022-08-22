@@ -153,28 +153,33 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic PostUser(UsersDto usersDto)
+       public dynamic PostUser(UsersDto usersDto)
         {
             if (usersDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            if (!string.IsNullOrEmpty(usersDto.PhoneNumber) && _context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
-                throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
 
-
-            return new Users
+            if (_context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
             {
-                Name = usersDto.Name,
-                Email = usersDto.Email,
-                Phones = new List<Phones>
+                Users users = _context.Users.Include(x => x.Phones).Where(x => x.Phones.FirstOrDefault().Number == usersDto.PhoneNumber).FirstOrDefault();
+                return users;
+            }
+            else
+            {
+                return new Users
                 {
-                    new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
-                },
-                CreatedAt = DateTime.Now,
-                IsEmailVerified = false
-            };
-        }
+                    Name = usersDto.Name,
+                    Email = usersDto.Email,
+                    Phones = new List<Phones>
+                        {
+                            new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
+                        },
+                    CreatedAt = DateTime.Now,
+                    IsEmailVerified = false
+                };
+            }
 
+        }
         public dynamic PostDevice(DeviceDto deviceDto)
         {
             if (deviceDto == null)

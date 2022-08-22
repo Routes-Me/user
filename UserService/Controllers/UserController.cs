@@ -79,9 +79,24 @@ namespace UserService.Controllers
             try
             {
                 Users user = _usersRepository.PostUser(usersDto);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                response.UserId = Obfuscation.Encode(user.UserId);
+                if (user.UserId == 0)
+                {
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                    response.Message = CommonMessage.UserInsert;
+                    response.UserId = Obfuscation.Encode(user.UserId);
+
+                    return StatusCode(StatusCodes.Status201Created, response);
+                }
+                else
+                {
+                    response.Message = CommonMessage.UserExist;
+                    response.UserId = Obfuscation.Encode(user.UserId);
+
+                    return StatusCode(StatusCodes.Status200OK, response);
+                }
+
+
             }
             catch (ArgumentNullException ex)
             {
@@ -95,8 +110,7 @@ namespace UserService.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
             }
-            response.Message = CommonMessage.UserInsert;
-            return StatusCode(StatusCodes.Status201Created, response);
+
         }
 
         [HttpPost]
