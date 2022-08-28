@@ -79,9 +79,24 @@ namespace UserService.Controllers
             try
             {
                 Users user = _usersRepository.PostUser(usersDto);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                response.UserId = Obfuscation.Encode(user.UserId);
+                if (user.UserId == 0)
+                {
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                    response.Message = CommonMessage.UserInsert;
+                    response.UserId = Obfuscation.Encode(user.UserId);
+
+                    return StatusCode(StatusCodes.Status201Created, response);
+                }
+                else
+                {
+                    response.Message = CommonMessage.UserExist;
+                    response.UserId = Obfuscation.Encode(user.UserId);
+
+                    return StatusCode(StatusCodes.Status200OK, response);
+                }
+
+
             }
             catch (ArgumentNullException ex)
             {
@@ -95,8 +110,7 @@ namespace UserService.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest, CommonMessage.ExceptionMessage + ex.Message);
             }
-            response.Message = CommonMessage.UserInsert;
-            return StatusCode(StatusCodes.Status201Created, response);
+
         }
 
         [HttpPost]
@@ -166,7 +180,7 @@ namespace UserService.Controllers
 
         [HttpGet]
         [Route("users/{number}/{uniqueid}/{os}")]
-        public IActionResult VerifyNumber(string number, string uniqueid, string OS)
+        public IActionResult VerifyPhoneNumber(string number, string uniqueid, string OS)
         {
             if (string.Equals(OS.ToLower() , OsTypes.android.ToString()))
             {
@@ -184,6 +198,17 @@ namespace UserService.Controllers
                 }
             }
 
+            return NotFound();
+        }
+
+        [HttpGet]
+        [Route("users/number/{number}")]
+        public IActionResult VerifyNumber(string number)
+        {
+            if (_usersRepository.DeviceExistance(number, "", ""))
+            {
+                return Ok();
+            }
             return NotFound();
         }
 

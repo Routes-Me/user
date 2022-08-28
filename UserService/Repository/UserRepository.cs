@@ -153,28 +153,33 @@ namespace UserService.Repository
             }
         }
 
-        public dynamic PostUser(UsersDto usersDto)
+       public dynamic PostUser(UsersDto usersDto)
         {
             if (usersDto == null)
                 throw new ArgumentNullException(CommonMessage.InvalidData);
 
-            if (!string.IsNullOrEmpty(usersDto.PhoneNumber) && _context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
-                throw new ArgumentException(CommonMessage.PhoneAlreadyExists);
 
-
-            return new Users
+            if (_context.Phones.Where(p => p.Number == usersDto.PhoneNumber).FirstOrDefault() != null)
             {
-                Name = usersDto.Name,
-                Email = usersDto.Email,
-                Phones = new List<Phones>
+                Users users = _context.Users.Include(x => x.Phones).Where(x => x.Phones.FirstOrDefault().Number == usersDto.PhoneNumber).FirstOrDefault();
+                return users;
+            }
+            else
+            {
+                return new Users
                 {
-                    new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
-                },
-                CreatedAt = DateTime.Now,
-                IsEmailVerified = false
-            };
-        }
+                    Name = usersDto.Name,
+                    Email = usersDto.Email,
+                    Phones = new List<Phones>
+                        {
+                            new Phones { Number = usersDto.PhoneNumber, IsVerified = false }
+                        },
+                    CreatedAt = DateTime.Now,
+                    IsEmailVerified = false
+                };
+            }
 
+        }
         public dynamic PostDevice(DeviceDto deviceDto)
         {
             if (deviceDto == null)
@@ -265,6 +270,12 @@ namespace UserService.Repository
 
         public bool DeviceExistance(string number, string uniqueid , string Os)
         {
+            if (string.IsNullOrEmpty(uniqueid)&&(string.IsNullOrEmpty(Os)))
+            {
+                if (_context.Phones.Where(p => p.Number == number).FirstOrDefault() != null)
+                return true;
+                return false;
+            }
             if(String.Equals(Os, "android"))
             {
                 if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.AndroidDevices.AndroidIdentifier == uniqueid)))
