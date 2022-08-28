@@ -180,7 +180,7 @@ namespace UserService.Controllers
 
         [HttpGet]
         [Route("users/{number}/{uniqueid}/{os}")]
-        public IActionResult VerifyNumber(string number, string uniqueid, string OS)
+        public IActionResult VerifyPhoneNumber(string number, string uniqueid, string OS)
         {
             if (string.Equals(OS.ToLower() , OsTypes.android.ToString()))
             {
@@ -198,6 +198,17 @@ namespace UserService.Controllers
                 }
             }
 
+            return NotFound();
+        }
+
+        [HttpGet]
+        [Route("users/number/{number}")]
+        public IActionResult VerifyNumber(string number)
+        {
+            if (_usersRepository.DeviceExistance(number, "", ""))
+            {
+                return Ok();
+            }
             return NotFound();
         }
 

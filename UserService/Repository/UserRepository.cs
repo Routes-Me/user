@@ -270,6 +270,12 @@ namespace UserService.Repository
 
         public bool DeviceExistance(string number, string uniqueid , string Os)
         {
+            if (string.IsNullOrEmpty(uniqueid)&&(string.IsNullOrEmpty(Os)))
+            {
+                if (_context.Phones.Where(p => p.Number == number).FirstOrDefault() != null)
+                return true;
+                return false;
+            }
             if(String.Equals(Os, "android"))
             {
                 if (_context.Users.Include("Phones").Include("Devices").Any(x => x.Phones.Any(x => x.Number == number) && x.Devices.Any(x => x.AndroidDevices.AndroidIdentifier == uniqueid)))
